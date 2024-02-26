@@ -118,24 +118,24 @@ elseStmt
 
 expr
     : LPAREN expr RPAREN #Parenthesis //
-    | expr op= MUL expr #ArithmeticExpr //
-    | expr op= ADD expr #ArithmeticExpr //
-    | expr op= DIV expr #ArithmeticExpr //
-    | expr op= SUB expr #ArithmeticExpr //
-    | expr op= AND expr #BooleanExpr //
-    | expr op= OR expr #BooleanExpr //
-    | expr op= LT expr #BooleanExpr //
-    | expr op= GT expr #BooleanExpr //
+    | expr LBRACK expr RBRACK #ArrayAccessExpre //
     | expr op= ACCESS expr #MethodExpr //
     | op= NOT expr #UnaryExpr //
+    | NEW name= ID LPAREN RPAREN #ClassInstance //
+    | NEW type expr #NewArray //
+    | expr op= MUL expr #ArithmeticExpr //
+    | expr op= DIV expr #ArithmeticExpr //
+    | expr op= ADD expr #ArithmeticExpr //
+    | expr op= SUB expr #ArithmeticExpr //
+    | expr op= LT expr #BooleanExpr //
+    | expr op= GT expr #BooleanExpr //
+    | expr op= AND expr #BooleanExpr //
+    | expr op= OR expr #BooleanExpr //
     | value=INTEGER #IntegerLiteral //
     | value=(TRUE|FALSE) #BooleanLiteral //
-    | expr LBRACK expr RBRACK #ArrayAccessExpre //
     | name= ID #VarRefExpr //
     | name= ID methodCall #CallMethod //
     | expr methodCall #CallMethod //
-    | NEW name= ID LPAREN RPAREN #ClassInstance //
-    | NEW type expr #NewArray //
     | LBRACK ((expr)(',' expr)*)? RBRACK #ArrayInitialization
     ;
 
