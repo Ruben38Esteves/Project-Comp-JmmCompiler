@@ -28,6 +28,7 @@ ACCESS : '.' ;
 CLASS : 'class' ;
 NEW : 'new' ;
 INTARRAY : 'int[]' ;
+INTVARARG: 'int...' ;
 INT : 'int' ;
 FLOAT : 'float' ;
 CHAR : 'char' ;
@@ -67,7 +68,8 @@ varDecl
     ;
 
 type
-    : name= INTARRAY
+    : name= INTVARARG
+    | name= INTARRAY
     | name= INT
     | name= FLOAT
     | name= BOOLEAN
@@ -79,7 +81,7 @@ type
 methodDecl locals[boolean isPublic=false]
     : (PUBLIC {$isPublic=true;})?
         type name=ID
-        LPAREN ((param)(',' param)* (',' varArg)?)? (varArg)? RPAREN
+        LPAREN (param)(',' param)* RPAREN
         LCURLY varDecl* stmt* RCURLY
     | mainDecl
     ;
@@ -92,9 +94,7 @@ param
     | type LBRACK RBRACK name= ID
     ;
 
-varArg
-    : INT '...' name= ID
-    ;
+
 
 stmt
     : expr SEMI #Something //

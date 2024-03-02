@@ -101,10 +101,15 @@ public class JmmSymbolTableBuilder {
                 .toList();
     }
 
+    private static boolean checkIfArray(String varType){
+        return varType.contains("[]");
+    }
+
+
     private static List<Symbol> buildFields(JmmNode classDecl)  {
 
         return classDecl.getChildren(VAR_DECL).stream()
-                .map(varDecl -> new Symbol(new Type(varDecl.getChild(0).get("name"), false), varDecl.get("name"))).toList();
+                .map(varDecl -> new Symbol(new Type(varDecl.getChild(0).get("name"), checkIfArray(varDecl.getChild(0).get("name"))), varDecl.get("name"))).toList();
     }
 
 }
