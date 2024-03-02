@@ -42,11 +42,11 @@ ID : [a-zA-Z][0-9a-zA-Z]* ;
 WS : [ \t\n\r\f]+ -> skip ;
 
 program
-    : classDecl EOF
+    : importStmt* classDecl EOF
     ;
 
 importStmt
-    : 'import' name= ID (ACCESS ID)* SEMI
+    : 'import' value+=ID(ACCESS value+=ID)* SEMI
     ;
 
 mainDecl
@@ -58,17 +58,16 @@ classDecl
     : CLASS name=ID ('extends' extendedClass= ID)?
         LCURLY
         varDecl*
-        methodDecl+
+        methodDecl*
         RCURLY
     ;
 
 varDecl
     : type name=ID SEMI
-    | type expr name=ID SEMI
     ;
 
 type
-    : name = INTARRAY
+    : name= INTARRAY
     | name= INT
     | name= FLOAT
     | name= BOOLEAN

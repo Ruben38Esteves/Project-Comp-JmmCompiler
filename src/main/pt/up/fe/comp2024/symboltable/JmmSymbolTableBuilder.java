@@ -20,7 +20,7 @@ public class JmmSymbolTableBuilder {
 
     public static JmmSymbolTable build(JmmNode root) {
 
-        var classDecl = root.getJmmChild(0);
+        var classDecl = root.getChildren(Kind.CLASS_DECL).get(0);
         SpecsCheck.checkArgument(Kind.CLASS_DECL.check(classDecl), () -> "Expected a class declaration: " + classDecl);
         String className = classDecl.get("name");
         var methods = buildMethods(classDecl);
@@ -37,11 +37,11 @@ public class JmmSymbolTableBuilder {
         if(classDecl.hasAttribute("extendedClass")){
             return classDecl.get("extendedClass");
         }
-        return "none";
+        return null;
     }
 
     private static List<String> buildImports(JmmNode root){
-        return root.getChildren(Kind.IMPORT_STMT).stream().map(import_statement -> import_statement.get("name")).toList();
+        return root.getChildren(Kind.IMPORT_STMT).stream().map(import_statement -> import_statement.get("value")).toList();
 
     }
 
