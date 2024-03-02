@@ -3,7 +3,6 @@ package pt.up.fe.comp2024.symboltable;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
-import pt.up.fe.comp2024.ast.TypeUtils;
 import pt.up.fe.specs.util.exceptions.NotImplementedException;
 
 import java.util.Collections;
@@ -12,7 +11,7 @@ import java.util.Map;
 
 public class JmmSymbolTable implements SymbolTable {
 
-    private final List<String> imports;
+    //private final List<String> imports;
     private final String className;
     private final String superClass;
     private final List<String> methods;
@@ -27,22 +26,31 @@ public class JmmSymbolTable implements SymbolTable {
                           Map<String, Type> returnTypes,
                           Map<String, List<Symbol>> params,
                           Map<String, List<Symbol>> locals,
+
                           String superClass/*,
                           List<Symbol> fields*/,
                           List<String> imports) {
+
         this.className = className;
         this.methods = methods;
         this.returnTypes = returnTypes;
         this.params = params;
         this.locals = locals;
-        this.imports = imports;
+        //this.imports = imports;
         this.superClass = superClass;
         //this.fields = fields;
     }
+
+
+
+
     @Override
     public List<String> getImports() {
-        return this.imports;
+        throw new NotImplementedException();
     }
+
+
+
     @Override
     public String getClassName() {
         return className;

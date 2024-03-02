@@ -27,6 +27,7 @@ ACCESS : '.' ;
 
 CLASS : 'class' ;
 NEW : 'new' ;
+INTARRAY : 'int[]' ;
 INT : 'int' ;
 FLOAT : 'float' ;
 CHAR : 'char' ;
@@ -49,14 +50,15 @@ importStmt
     ;
 
 mainDecl
-    : 'static void main(String[] args)' LCURLY expr* RCURLY
+    : 'public static void main(String[] args)' LCURLY expr* RCURLY
+    | 'static void main(String[] args)' LCURLY expr* RCURLY
     ;
 
 classDecl
     : CLASS name=ID ('extends' extendedClass= ID)?
         LCURLY
         varDecl*
-        methodDecl*
+        methodDecl+
         RCURLY
     ;
 
@@ -66,7 +68,8 @@ varDecl
     ;
 
 type
-    : name= INT
+    : name = INTARRAY
+    | name= INT
     | name= FLOAT
     | name= BOOLEAN
     | name= CHAR
@@ -79,6 +82,7 @@ methodDecl locals[boolean isPublic=false]
         type name=ID
         LPAREN ((param)(',' param)* (',' varArg)?)? (varArg)? RPAREN
         LCURLY varDecl* stmt* RCURLY
+    | mainDecl
     ;
 
 methodCall

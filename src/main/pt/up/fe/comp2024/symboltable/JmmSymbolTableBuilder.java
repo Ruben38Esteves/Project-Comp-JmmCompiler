@@ -42,6 +42,7 @@ public class JmmSymbolTableBuilder {
 
     private static List<String> buildImports(JmmNode root){
         return root.getChildren(Kind.IMPORT_STMT).stream().map(import_statement -> import_statement.get("name")).toList();
+
     }
 
     private static Map<String, Type> buildReturnTypes(JmmNode classDecl) {
@@ -98,6 +99,12 @@ public class JmmSymbolTableBuilder {
         return methodDecl.getChildren(VAR_DECL).stream()
                 .map(varDecl -> new Symbol(intType, varDecl.get("name")))
                 .toList();
+    }
+
+    private static List<Symbol> buildFields(JmmNode classDecl)  {
+
+        return classDecl.getChildren(VAR_DECL).stream()
+                .map(varDecl -> new Symbol(new Type(varDecl.getChild(0).get("name"), false), varDecl.get("name"))).toList();
     }
 
 }
