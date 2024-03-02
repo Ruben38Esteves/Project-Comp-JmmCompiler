@@ -1,5 +1,6 @@
 package pt.up.fe.comp2024.symboltable;
 
+import org.junit.Test;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
@@ -7,13 +8,12 @@ import pt.up.fe.comp2024.ast.Kind;
 import pt.up.fe.comp2024.ast.TypeUtils;
 import pt.up.fe.specs.util.SpecsCheck;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.lang.model.type.NullType;
+import java.util.*;
 
 import static pt.up.fe.comp2024.ast.Kind.METHOD_DECL;
 import static pt.up.fe.comp2024.ast.Kind.VAR_DECL;
+import static pt.up.fe.comp2024.ast.Kind.IMPORT_STMT;
 
 public class JmmSymbolTableBuilder {
 
@@ -23,17 +23,25 @@ public class JmmSymbolTableBuilder {
         var classDecl = root.getJmmChild(0);
         SpecsCheck.checkArgument(Kind.CLASS_DECL.check(classDecl), () -> "Expected a class declaration: " + classDecl);
         String className = classDecl.get("name");
-        String classNameSuper = classDecl.get("extendedClass");
-
         var methods = buildMethods(classDecl);
         var returnTypes = buildReturnTypes(classDecl);
         var params = buildParams(classDecl);
         var locals = buildLocals(classDecl);
-        var superClass = classNameSuper;
-        var fields = ;
-        var imports = ;
+        var superClass = buildSuperClass(classDecl);
+        var imports = buildImports(root);
 
-        return new JmmSymbolTable(className, methods, returnTypes, params, locals, superClass);
+        return new JmmSymbolTable(className, methods, returnTypes, params, locals, superClass, imports);
+    }
+
+    private static String buildSuperClass(JmmNode classDecl) {
+        if(classDecl.hasAttribute("extendedClass")){
+            return classDecl.get("extendedClass");
+        }
+        return "none";
+    }
+
+    private static List<String> buildImports(JmmNode root){
+        return root.getChildren(Kind.IMPORT_STMT).stream().map(import_statement -> import_statement.get("name")).toList();
     }
 
     private static Map<String, Type> buildReturnTypes(JmmNode classDecl) {
@@ -45,6 +53,8 @@ public class JmmSymbolTableBuilder {
                 .forEach(method -> map.put(method.get("name"), new Type(TypeUtils.getIntTypeName(), false)));
 
         return map;
+
+
     }
 
     private static Map<String, List<Symbol>> buildParams(JmmNode classDecl) {
