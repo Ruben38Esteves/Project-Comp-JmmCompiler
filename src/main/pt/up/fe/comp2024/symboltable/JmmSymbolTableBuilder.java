@@ -29,7 +29,7 @@ public class JmmSymbolTableBuilder {
         var locals = buildLocals(classDecl);
         var superClass = buildSuperClass(classDecl);
         var imports = buildImports(root);
-        var fields = buildFields(classDecl);
+        var fields = buildFieldsFunction(classDecl);
 
         return new JmmSymbolTable(className, methods, returnTypes, params, locals, superClass, fields, imports);
     }
@@ -129,9 +129,7 @@ public class JmmSymbolTableBuilder {
         return varType.contains("[]");
     }
 
-    private static List<Symbol> buildFields(JmmNode classDecl)  {
-        //String cenas = classDecl.getChildren(VAR_DECL).get(0).get("name");
-        //String cenas2 = classDecl.getChildren(VAR_DECL).get(0).getChild(0).get("name");
+    private static List<Symbol> buildFieldsFunction(JmmNode classDecl)  {
         if(classDecl.getChildren(Kind.VAR_DECL).size() == 0){
             return new ArrayList<>();
         }

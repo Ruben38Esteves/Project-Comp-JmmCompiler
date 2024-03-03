@@ -15,7 +15,7 @@ public class JmmSymbolTable implements SymbolTable {
     private final String className;
     private final String superClass;
     private final List<String> methods;
-    private final List<Symbol> fields;
+    private final List<Symbol> my_fields;
     private final Map<String, Type> returnTypes;
     private final Map<String, List<Symbol>> params;
     private final Map<String, List<Symbol>> locals;
@@ -37,7 +37,8 @@ public class JmmSymbolTable implements SymbolTable {
         this.locals = locals;
         this.imports = imports;
         this.superClass = superClass;
-        this.fields = fields;
+        this.my_fields = fields;
+        System.out.println("FIELDS: " + my_fields);
     }
 
 
@@ -58,10 +59,17 @@ public class JmmSymbolTable implements SymbolTable {
     }
     @Override
     public List<Symbol> getFields() {
+        /*
+        List<Symbol> myFields = this.fields;
         if(!this.fields.isEmpty()){
-            return this.fields;
+            System.out.println("FIELDS: " + myFields);
+            return Collections.unmodifiableList(this.fields);
         }
+        System.out.println("FIELDS: " + myFields);
         return Collections.emptyList();
+
+         */
+        return Collections.unmodifiableList(my_fields);
     }
     @Override
     public List<String> getMethods() {
