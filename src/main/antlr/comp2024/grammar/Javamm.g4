@@ -39,20 +39,15 @@ RETURN : 'return' ;
 
 INTEGER : [0] | ([1-9][0-9]*);
 ID : [a-zA-Z][0-9a-zA-Z]* ;
-//CHARACTER : . ;
 WS : [ \t\n\r\f]+ -> skip ;
 
 program
-    : importStmt* classDecl EOF
+    : stmt EOF
+    | importStmt* classDecl EOF
     ;
 
 importStmt
     : 'import' value+=ID(ACCESS value+=ID)* SEMI
-    ;
-
-mainDecl
-    : 'public static void main(String[] args)' LCURLY expr* RCURLY
-    | 'static void main(String[] args)' LCURLY expr* RCURLY
     ;
 
 classDecl
@@ -78,22 +73,22 @@ type
     | name= ID
     ;
 
-methodDecl locals[boolean isPublic=false]
-    : (PUBLIC {$isPublic=true;})?
-        type name=ID
-        LPAREN params+=param(',' params+=param)* RPAREN
-        LCURLY varDecl* stmt* RCURLY
-    | mainDecl
-    ;
-
-methodCall
-    : LPAREN ((expr)(',' expr)*)? RPAREN ;
-
 param
     : type name=ID
-    | type LBRACK RBRACK name= ID
     ;
 
+mainDecl
+    : 'public static void main(String[] args)' LCURLY varDecl* stmt* RCURLY
+    | 'static void main(String[] args)' LCURLY varDecl* stmt* RCURLY
+    ;
+
+methodDecl locals[boolean isPublic=false]
+    : mainDecl
+    |(PUBLIC {$isPublic=true;})?
+        type name=ID
+        LPAREN (params+=param(',' params+=param)*)? RPAREN
+        LCURLY varDecl* stmt* RCURLY
+    ;
 
 
 stmt
@@ -104,6 +99,9 @@ stmt
     | ifStmt (elseIfStmt)* (elseStmt)? #IfChainStatement //
     | 'while' LPAREN expr RPAREN stmt #WhileStatement //
     ;
+
+methodCall
+    : LPAREN ((expr)(',' expr)*)? RPAREN ;
 
 
 ifStmt

@@ -59,21 +59,25 @@ public class JmmSymbolTableBuilder {
     }
 
     private static Map<String, List<Symbol>> buildParams(JmmNode classDecl) {
-        // TODO: Simple implementation that needs to be expanded
 
         Map<String, List<Symbol>> map = new HashMap<>();
 
         var intType = new Type(TypeUtils.getIntTypeName(), false);
 
-
         classDecl.getChildren(METHOD_DECL).stream()
-                .forEach(method -> map.put(method.get("name"), method.getChildren(Kind.PARAM).stream()
-                        .map(param -> new Symbol(new Type(param.getChild(0).get("name"), false), param.get("name")))
-                        .toList()));
+                .forEach(method -> map.put(method.get("name"), getMethodParams(method)));
 
         return map;
     }
-//Arrays.asList(new Symbol(intType, method.getChildren()))
+    public static List<Symbol> getMethodParams(JmmNode methodDecl){
+        if(methodDecl.getChild(1).isInstance(Kind.PARAM)){
+            return methodDecl.getChildren(Kind.PARAM).stream()
+                    .map(param -> new Symbol(new Type(param.getChild(0).get("name"), checkIfArray(param.getChild(0).get("name"))), param.get("name")))
+                    .toList();
+        }
+        System.out.println("NAO ENTROU");
+        return new ArrayList<>();
+    }
     private static Map<String, List<Symbol>> buildLocals(JmmNode classDecl) {
         // TODO: Simple implementation that needs to be expanded
 
@@ -107,7 +111,6 @@ public class JmmSymbolTableBuilder {
     private static boolean checkIfArray(String varType){
         return varType.contains("[]");
     }
-
 
     private static List<Symbol> buildFields(JmmNode classDecl)  {
 
