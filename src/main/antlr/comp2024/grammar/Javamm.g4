@@ -35,6 +35,7 @@ FLOAT : 'float' ;
 CHAR : 'char' ;
 BOOLEAN : 'boolean' ;
 STRING : 'String' ;
+VOID : 'void' ;
 PUBLIC : 'public' ;
 RETURN : 'return' ;
 
@@ -72,6 +73,7 @@ type
     | name= BOOLEAN
     | name= CHAR
     | name= STRING
+    | name= VOID
     | name= ID
     ;
 
@@ -80,8 +82,7 @@ param
     ;
 
 methodDecl locals[boolean isPublic=false]
-    : 'public static void' name='main' LPAREN (param(',' param)*)? RPAREN LCURLY varDecl* stmt* RCURLY
-    | 'static void' name='main' LPAREN (param(',' param)*)? RPAREN LCURLY varDecl* stmt* RCURLY
+    : 'public'? 'static' type name='main' LPAREN (param(',' param)*)? RPAREN LCURLY varDecl* stmt* RCURLY
     |(PUBLIC {$isPublic=true;})?
         type name=ID
         LPAREN (param(',' param)*)? RPAREN
@@ -90,7 +91,7 @@ methodDecl locals[boolean isPublic=false]
 //(params+=param(',' params+=param)*)?
 
 stmt
-    : expr SEMI #Something //
+    : expr SEMI #Something //S
     | expr EQUALS expr SEMI #AssignStmt //
     | RETURN expr SEMI #ReturnStmt //
     | LCURLY (stmt)* RCURLY #Tobereplaced //

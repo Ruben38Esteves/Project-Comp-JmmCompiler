@@ -26,7 +26,6 @@ public class JmmSymbolTable implements SymbolTable {
                           Map<String, Type> returnTypes,
                           Map<String, List<Symbol>> params,
                           Map<String, List<Symbol>> locals,
-
                           String superClass,
                           List<Symbol> fields,
                           List<String> imports) {
@@ -59,8 +58,10 @@ public class JmmSymbolTable implements SymbolTable {
     }
     @Override
     public List<Symbol> getFields() {
-        //return this.fields;
-        throw new NotImplementedException();
+        if(!this.fields.isEmpty()){
+            return this.fields;
+        }
+        return Collections.emptyList();
     }
     @Override
     public List<String> getMethods() {

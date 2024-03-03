@@ -42,17 +42,22 @@ public class JmmSymbolTableBuilder {
     }
 
     private static List<String> buildImports(JmmNode root){
+        if(root.getChildren(Kind.IMPORT_STMT).size() == 0){
+            return new ArrayList<>();
+        }
         return root.getChildren(Kind.IMPORT_STMT).stream().map(import_statement -> import_statement.get("value")).toList();
 
     }
 
     private static Map<String, Type> buildReturnTypes(JmmNode classDecl) {
-        // TODO: Simple implementation that needs to be expanded
 
         Map<String, Type> map = new HashMap<>();
+        if(classDecl.getChildren(Kind.METHOD_DECL).size() == 0){
+            return map;
+        }
 
-        classDecl.getChildren(METHOD_DECL).stream()
-                .forEach(method -> map.put(method.get("name"), new Type(TypeUtils.getIntTypeName(), false)));
+        classDecl.getChildren(Kind.METHOD_DECL).stream()
+                .forEach(method -> map.put(method.get("name"), new Type(method.getChild(0).get("name"), checkIfArray(method.getChild(0).get("name")))));
 
         return map;
 
@@ -84,7 +89,6 @@ public class JmmSymbolTableBuilder {
         return new ArrayList<>();
     }
     private static Map<String, List<Symbol>> buildLocals(JmmNode classDecl) {
-        // TODO: Simple implementation that needs to be expanded
 
         Map<String, List<Symbol>> map = new HashMap<>();
 
@@ -106,9 +110,18 @@ public class JmmSymbolTableBuilder {
     private static List<Symbol> getLocalsList(JmmNode methodDecl) {
 
         var intType = new Type(TypeUtils.getIntTypeName(), false);
-
-        return methodDecl.getChildren(VAR_DECL).stream()
-                .map(varDecl -> new Symbol(new Type(varDecl.get("name"), checkIfArray(varDecl.get("name"))), varDecl.get("name")))
+        if(methodDecl.getChildren(Kind.VAR_DECL).size() == 0){
+            return new ArrayList<>();
+        }
+        return methodDecl.getChildren(Kind.VAR_DECL).stream()
+                .map(varDecl -> {
+                    String nameOfField = varDecl.get("name");
+                    String typeOfField = varDecl.getChild(0).get("name");
+                    boolean isFieldArray = checkIfArray(typeOfField);
+                    Type fieldType = new Type(typeOfField, isFieldArray);
+                    Symbol field = new Symbol(fieldType, nameOfField);
+                    return field;
+                })
                 .toList();
     }
 
@@ -117,9 +130,21 @@ public class JmmSymbolTableBuilder {
     }
 
     private static List<Symbol> buildFields(JmmNode classDecl)  {
+        //String cenas = classDecl.getChildren(VAR_DECL).get(0).get("name");
+        //String cenas2 = classDecl.getChildren(VAR_DECL).get(0).getChild(0).get("name");
+        if(classDecl.getChildren(Kind.VAR_DECL).size() == 0){
+            return new ArrayList<>();
+        }
+        return classDecl.getChildren(Kind.VAR_DECL).stream()
+                .map(vardecl -> {
+                    String nameOfField = vardecl.get("name");
+                    String typeOfField = vardecl.getChild(0).get("name");
+                    boolean isFieldArray = checkIfArray(typeOfField);
+                    Type fieldType = new Type(typeOfField, isFieldArray);
+                    Symbol field = new Symbol(fieldType, nameOfField);
+                    return field;
 
-        return classDecl.getChildren(VAR_DECL).stream()
-                .map(varDecl -> new Symbol(new Type(varDecl.get("name"), checkIfArray(varDecl.get("name"))), varDecl.get("name"))).toList();
+                }).toList();
     }
 
 }

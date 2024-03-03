@@ -4,7 +4,7 @@ class MethodsAndFields{
 	boolean field2;
 	MethodsAndFields field3;
 	
-	public int getField1(){
+	public int getField1(int field1){
 		return field1;
 	}
 	
@@ -16,12 +16,10 @@ class MethodsAndFields{
 		return field3;
 	}
 	
-	public int[] all(int a, boolean b, MethodsAndFields maf){
+	public static void main(String[] args){
 		int[] c;
 		return c;
 	}
 	
-	public static void main(String[] args){
-		
-	}
+
 }
