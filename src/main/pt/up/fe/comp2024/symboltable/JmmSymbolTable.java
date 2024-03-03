@@ -48,9 +48,6 @@ public class JmmSymbolTable implements SymbolTable {
     public List<String> getImports() {
         return Collections.unmodifiableList(imports);
     }
-
-
-
     @Override
     public String getClassName() {
         return className;

@@ -65,12 +65,15 @@ public class JmmSymbolTableBuilder {
 
         var intType = new Type(TypeUtils.getIntTypeName(), false);
 
+
         classDecl.getChildren(METHOD_DECL).stream()
-                .forEach(method -> map.put(method.get("name"), Arrays.asList(new Symbol(intType, method.getJmmChild(1).get("name")))));
+                .forEach(method -> map.put(method.get("name"), method.getChildren(Kind.PARAM).stream()
+                        .map(param -> new Symbol(new Type(param.getChild(0).get("name"), false), param.get("name")))
+                        .toList()));
 
         return map;
     }
-
+//Arrays.asList(new Symbol(intType, method.getChildren()))
     private static Map<String, List<Symbol>> buildLocals(JmmNode classDecl) {
         // TODO: Simple implementation that needs to be expanded
 
