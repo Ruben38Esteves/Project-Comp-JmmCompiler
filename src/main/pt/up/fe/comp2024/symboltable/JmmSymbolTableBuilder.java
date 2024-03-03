@@ -57,7 +57,7 @@ public class JmmSymbolTableBuilder {
         }
 
         classDecl.getChildren(Kind.METHOD_DECL).stream()
-                .forEach(method -> map.put(method.get("name"), new Type(method.getChild(0).get("name"), checkIfArray(method.getChild(0).get("name")))));
+                .forEach(method -> map.put(method.get("name"), new Type(method.getChild(0).get("name").replace("[]", ""), checkIfArray(method.getChild(0).get("name")))));
 
         return map;
 
