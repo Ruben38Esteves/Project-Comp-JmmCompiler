@@ -28,6 +28,7 @@ ACCESS : '.' ;
 CLASS : 'class' ;
 NEW : 'new' ;
 INTARRAY : 'int[]' ;
+STRINGARRAY : 'String[]' ;
 INTVARARG: 'int...' ;
 INT : 'int' ;
 FLOAT : 'float' ;
@@ -64,6 +65,7 @@ varDecl
 
 type
     : name= INTVARARG
+    | name= STRINGARRAY
     | name= INTARRAY
     | name= INT
     | name= FLOAT
@@ -77,19 +79,15 @@ param
     : type name=ID
     ;
 
-mainDecl
-    : 'public static void main(String[] args)' LCURLY varDecl* stmt* RCURLY
-    | 'static void main(String[] args)' LCURLY varDecl* stmt* RCURLY
-    ;
-
 methodDecl locals[boolean isPublic=false]
-    : mainDecl
+    : 'public static void' name='main' LPAREN (param(',' param)*)? RPAREN LCURLY varDecl* stmt* RCURLY
+    | 'static void' name='main' LPAREN (param(',' param)*)? RPAREN LCURLY varDecl* stmt* RCURLY
     |(PUBLIC {$isPublic=true;})?
         type name=ID
-        LPAREN (params+=param(',' params+=param)*)? RPAREN
+        LPAREN (param(',' param)*)? RPAREN
         LCURLY varDecl* stmt* RCURLY
     ;
-
+//(params+=param(',' params+=param)*)?
 
 stmt
     : expr SEMI #Something //

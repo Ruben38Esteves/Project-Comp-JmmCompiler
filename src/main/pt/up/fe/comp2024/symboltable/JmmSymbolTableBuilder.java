@@ -29,8 +29,9 @@ public class JmmSymbolTableBuilder {
         var locals = buildLocals(classDecl);
         var superClass = buildSuperClass(classDecl);
         var imports = buildImports(root);
+        var fields = buildFields(classDecl);
 
-        return new JmmSymbolTable(className, methods, returnTypes, params, locals, superClass, imports);
+        return new JmmSymbolTable(className, methods, returnTypes, params, locals, superClass, fields, imports);
     }
 
     private static String buildSuperClass(JmmNode classDecl) {
@@ -70,12 +71,16 @@ public class JmmSymbolTableBuilder {
         return map;
     }
     public static List<Symbol> getMethodParams(JmmNode methodDecl){
-        if(methodDecl.getChild(1).isInstance(Kind.PARAM)){
+        if(methodDecl.getChildren(Kind.PARAM).size() > 0){
             return methodDecl.getChildren(Kind.PARAM).stream()
-                    .map(param -> new Symbol(new Type(param.getChild(0).get("name"), checkIfArray(param.getChild(0).get("name"))), param.get("name")))
+                    .map(param -> {
+                        if(param != null){
+                            return new Symbol(new Type(param.getChild(0).get("name"), checkIfArray(param.getChild(0).get("name"))), param.get("name"));
+                        }
+                        return null;
+                    })
                     .toList();
         }
-        System.out.println("NAO ENTROU");
         return new ArrayList<>();
     }
     private static Map<String, List<Symbol>> buildLocals(JmmNode classDecl) {
@@ -99,12 +104,11 @@ public class JmmSymbolTableBuilder {
 
 
     private static List<Symbol> getLocalsList(JmmNode methodDecl) {
-        // TODO: Simple implementation that needs to be expanded
 
         var intType = new Type(TypeUtils.getIntTypeName(), false);
 
         return methodDecl.getChildren(VAR_DECL).stream()
-                .map(varDecl -> new Symbol(intType, varDecl.get("name")))
+                .map(varDecl -> new Symbol(new Type(varDecl.get("name"), checkIfArray(varDecl.get("name"))), varDecl.get("name")))
                 .toList();
     }
 
@@ -115,7 +119,7 @@ public class JmmSymbolTableBuilder {
     private static List<Symbol> buildFields(JmmNode classDecl)  {
 
         return classDecl.getChildren(VAR_DECL).stream()
-                .map(varDecl -> new Symbol(new Type(varDecl.getChild(0).get("name"), checkIfArray(varDecl.getChild(0).get("name"))), varDecl.get("name"))).toList();
+                .map(varDecl -> new Symbol(new Type(varDecl.get("name"), checkIfArray(varDecl.get("name"))), varDecl.get("name"))).toList();
     }
 
 }
