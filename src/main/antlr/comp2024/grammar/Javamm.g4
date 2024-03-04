@@ -41,6 +41,8 @@ RETURN : 'return' ;
 
 INTEGER : [0] | ([1-9][0-9]*);
 ID : [a-zA-Z][0-9a-zA-Z]* ;
+LINE_COMMENT : '//' .*? '\n' -> skip ;
+MULTILINE_COMMENT : '/*' .*? '*/' -> skip ;
 WS : [ \t\n\r\f]+ -> skip ;
 
 program
