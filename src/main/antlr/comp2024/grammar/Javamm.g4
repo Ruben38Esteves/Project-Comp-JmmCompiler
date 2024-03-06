@@ -27,9 +27,9 @@ ACCESS : '.' ;
 
 CLASS : 'class' ;
 NEW : 'new' ;
-INTARRAY : 'int' '[]' ;
+INTARRAY : 'int' '[]'+ ;
 STRINGARRAY : 'String[]' ;
-INTVARARG: 'int' '...' ;
+INTVARARG: 'int' '...'+ ;
 INT : 'int' ;
 FLOAT : 'float' ;
 CHAR : 'char' ;
@@ -40,7 +40,7 @@ PUBLIC : 'public' ;
 RETURN : 'return' ;
 
 INTEGER : ('0' | [1-9][0-9]*) ;
-ID : [a-zA-Z$][a-zA-Z0-9$]* ;
+ID : [a-zA-Z$_][a-zA-Z0-9$_]* ;
 LINE_COMMENT : '//' .*? '\n' -> skip ;
 MULTILINE_COMMENT : '/*' .*? '*/' -> skip ;
 WS : [ \t\n\r\f]+ -> skip ;
