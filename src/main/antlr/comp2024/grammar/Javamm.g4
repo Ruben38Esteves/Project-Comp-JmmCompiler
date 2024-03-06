@@ -39,8 +39,8 @@ VOID : 'void' ;
 PUBLIC : 'public' ;
 RETURN : 'return' ;
 
-INTEGER : [0] | ([1-9][0-9]*);
-ID : [a-zA-Z][0-9a-zA-Z]* ;
+INTEGER : ('0' | [1-9][0-9]) ;
+ID : [a-zA-Z$][a-zA-Z0-9$] ;
 LINE_COMMENT : '//' .*? '\n' -> skip ;
 MULTILINE_COMMENT : '/*' .*? '*/' -> skip ;
 WS : [ \t\n\r\f]+ -> skip ;
@@ -84,7 +84,7 @@ param
     ;
 
 methodDecl locals[boolean isPublic=false]
-    : 'public'? 'static' type name='main' LPAREN (param(',' param)*)? RPAREN LCURLY varDecl* stmt* RCURLY
+    : 'public'? 'static' type name=ID LPAREN (param(',' param)*)? RPAREN LCURLY varDecl* stmt* RCURLY
     |(PUBLIC {$isPublic=true;})?
         type name=ID
         LPAREN (param(',' param)*)? RPAREN
@@ -97,7 +97,7 @@ stmt
     | expr EQUALS expr SEMI #AssignStmt //
     | RETURN expr SEMI #ReturnStmt //
     | LCURLY (stmt)* RCURLY #Tobereplaced //
-    | ifStmt (elseIfStmt)* (elseStmt)? #IfChainStatement //
+    | ifStmt (elseIfStmt)* elseStmt #IfChainStatement //
     | 'while' LPAREN expr RPAREN stmt #WhileStatement //
     ;
 
