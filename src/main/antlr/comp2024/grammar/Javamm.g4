@@ -39,8 +39,8 @@ VOID : 'void' ;
 PUBLIC : 'public' ;
 RETURN : 'return' ;
 
-INTEGER : ('0' | [1-9][0-9]) ;
-ID : [a-zA-Z$][a-zA-Z0-9$] ;
+INTEGER : ('0' | [1-9][0-9]*) ;
+ID : [a-zA-Z$][a-zA-Z0-9$]* ;
 LINE_COMMENT : '//' .*? '\n' -> skip ;
 MULTILINE_COMMENT : '/*' .*? '*/' -> skip ;
 WS : [ \t\n\r\f]+ -> skip ;
