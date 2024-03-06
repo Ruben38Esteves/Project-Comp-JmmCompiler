@@ -68,8 +68,6 @@ public class JmmSymbolTableBuilder {
 
         Map<String, List<Symbol>> map = new HashMap<>();
 
-        var intType = new Type(TypeUtils.getIntTypeName(), false);
-
         classDecl.getChildren(METHOD_DECL).stream()
                 .forEach(method -> map.put(method.get("name"), getMethodParams(method)));
 
@@ -80,7 +78,7 @@ public class JmmSymbolTableBuilder {
             return methodDecl.getChildren(Kind.PARAM).stream()
                     .map(param -> {
                         if(param != null){
-                            return new Symbol(new Type(param.getChild(0).get("name"), checkIfArray(param.getChild(0).get("name"))), param.get("name"));
+                            return new Symbol(new Type(param.getChild(0).get("name").replace("[]", ""), checkIfArray(param.getChild(0).get("name"))), param.get("name"));
                         }
                         return null;
                     })
@@ -118,7 +116,7 @@ public class JmmSymbolTableBuilder {
                     String nameOfField = varDecl.get("name");
                     String typeOfField = varDecl.getChild(0).get("name");
                     boolean isFieldArray = checkIfArray(typeOfField);
-                    Type fieldType = new Type(typeOfField, isFieldArray);
+                    Type fieldType = new Type(typeOfField.replace("[]", ""), isFieldArray);
                     Symbol field = new Symbol(fieldType, nameOfField);
                     return field;
                 })
@@ -138,7 +136,7 @@ public class JmmSymbolTableBuilder {
                     String nameOfField = vardecl.get("name");
                     String typeOfField = vardecl.getChild(0).get("name");
                     boolean isFieldArray = checkIfArray(typeOfField);
-                    Type fieldType = new Type(typeOfField, isFieldArray);
+                    Type fieldType = new Type(typeOfField.replace("[]", ""), isFieldArray);
                     Symbol field = new Symbol(fieldType, nameOfField);
                     return field;
 
