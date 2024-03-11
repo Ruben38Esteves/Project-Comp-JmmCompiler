@@ -27,9 +27,9 @@ ACCESS : '.' ;
 
 CLASS : 'class' ;
 NEW : 'new' ;
-INTARRAY : 'int' '[]'+ ;
-STRINGARRAY : 'String[]' ;
-INTVARARG: 'int' '...'+ ;
+INTARRAY : 'int' '[' ']' ;
+STRINGARRAY : 'String['']' ;
+INTVARARG: 'int' '...' ;
 INT : 'int' ;
 FLOAT : 'float' ;
 CHAR : 'char' ;
