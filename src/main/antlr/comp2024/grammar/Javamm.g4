@@ -125,10 +125,10 @@ expr
     | op= NOT expr #UnaryExpr //
     | NEW name= ID LPAREN RPAREN #ClassInstance //
     | NEW type expr #NewArray //
-    | expr op= MUL expr #ArithmeticExpr //
-    | expr op= DIV expr #ArithmeticExpr //
-    | expr op= ADD expr #ArithmeticExpr //
-    | expr op= SUB expr #ArithmeticExpr //
+    | expr op= MUL expr #BinaryExpr //
+    | expr op= DIV expr #BinaryExpr //
+    | expr op= ADD expr #BinaryExpr //
+    | expr op= SUB expr #BinaryExpr //
     | expr op= LT expr #BooleanExpr //
     | expr op= GT expr #BooleanExpr //
     | expr op= AND expr #BooleanExpr //

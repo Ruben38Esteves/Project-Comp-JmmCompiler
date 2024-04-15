@@ -19,11 +19,12 @@ public enum Kind {
     BINARY_EXPR,
     INTEGER_LITERAL,
     VAR_REF_EXPR,
-    IMPORT_STMT;
+    IMPORT_STMT,
+    ARRAY_ACCESS_EXPRESSION;
 
 
     private static final Set<Kind> STATEMENTS = Set.of(ASSIGN_STMT, RETURN_STMT);
-    private static final Set<Kind> EXPRESSIONS = Set.of(BINARY_EXPR, INTEGER_LITERAL, VAR_REF_EXPR);
+    private static final Set<Kind> EXPRESSIONS = Set.of(BINARY_EXPR, INTEGER_LITERAL, VAR_REF_EXPR, ARRAY_ACCESS_EXPRESSION);
 
     private final String name;
 
