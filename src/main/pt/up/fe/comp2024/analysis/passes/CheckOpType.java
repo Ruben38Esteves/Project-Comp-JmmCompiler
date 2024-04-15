@@ -1,5 +1,6 @@
 package pt.up.fe.comp2024.analysis.passes;
 
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
@@ -8,6 +9,8 @@ import pt.up.fe.comp2024.analysis.AnalysisVisitor;
 import pt.up.fe.comp2024.ast.Kind;
 import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.specs.util.SpecsCheck;
+
+import java.util.List;
 
 public class CheckOpType extends AnalysisVisitor {
     private String currentMethod;
@@ -28,28 +31,47 @@ public class CheckOpType extends AnalysisVisitor {
         // Retrieve the left and right operands
         JmmNode leftOperand = binaryExpr.getChild(0);
         JmmNode rightOperand = binaryExpr.getChild(1);
-        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        System.out.println(leftOperand);
+        List<Symbol> list = symTable.getLocalVariables(currentMethod);
+        String leftType = "";
+        String rightType = "";
+        for (var a: list){
+            if (a.getName().equals(leftOperand.get("name"))){
+                leftType = a.getType().getName();
+            }
+            if (a.getName().equals(rightOperand.get("name"))){
+                rightType = a.getType().getName();
+            }
+        }
         // Perform type checking based on the operator
         String operator = binaryExpr.get("op");
 
-        // Retrieve the types of the operands
-        String leftType = "aa";
-        String rightType = "aa";
 
         // Perform type checking based on the operator
         switch (operator) {
-            case "+":
-            case "-":
-            case "*":
-            case "/":
-                // Check if both operands have numeric types (int or float)
-                if (!isNumericType(leftType) || !isNumericType(rightType)) {
-                    String errorMessage = "Operands of the " + operator + " operator must have numeric types";
-                    //addReport(Report.error(Stage.SEMANTIC, binaryExpr, errorMessage));
+            case "*", "+", "-":
+                if (rightType.equals("boolean") || leftType.equals("boolean")){
+                    var message = String.format("Cannot perform '%s' on '%s'", operator, rightType);
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(binaryExpr),
+                            NodeUtils.getColumn(binaryExpr),
+                            message,
+                            null)
+                    );
                 }
                 break;
-            // Add cases for other operators as needed
+            case "/": // separei para adicionar divisao por zero
+                if (rightType.equals("boolean") || leftType.equals("boolean")){
+                    var message = String.format("Cannot perform '%s' on '%s'", operator, rightType);
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(binaryExpr),
+                            NodeUtils.getColumn(binaryExpr),
+                            message,
+                            null)
+                    );
+                }
+                break;
         }
 
         return null;
