@@ -77,8 +77,4 @@ public class CheckOpType extends AnalysisVisitor {
         return null;
     }
 
-    // Helper method to check if a type is numeric (e.g., int or float)
-    private boolean isNumericType(String type) {
-        return type.equals("int") || type.equals("float");
-    }
 }
