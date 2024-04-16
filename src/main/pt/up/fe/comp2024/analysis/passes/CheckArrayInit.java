@@ -20,6 +20,7 @@ public class CheckArrayInit extends AnalysisVisitor{
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
         addVisit(Kind.ARRAY_INITIALIZATION, this::visitArrayInitialization);
         addVisit(Kind.ARRAY_ACCESS_EXPR, this::visitArrayAccess);
+        addVisit(Kind.WHILE_STATEMENT, this::visitWhileStmt);
     }
 
     private Void visitMethodDecl(JmmNode method, SymbolTable symTable){
@@ -113,6 +114,24 @@ public class CheckArrayInit extends AnalysisVisitor{
                     null)
             );
         }
+        return null;
+    }
+
+
+    // Vai falhar privados, esta bue especifico para o array dentro do while
+    private Void visitWhileStmt(JmmNode whileStmt, SymbolTable symTable){
+        JmmNode expr = whileStmt.getChild(0);
+        if (!expr.getKind().equals("BooleanExpr") || !expr.getKind().equals("BooleanLiteral")){
+                        var message = String.format(" in while loop");
+                        addReport(Report.newError(
+                                Stage.SEMANTIC,
+                                NodeUtils.getLine(whileStmt),
+                                NodeUtils.getColumn(whileStmt),
+                                message,
+                                null)
+                        );
+        }
+
         return null;
     }
 }

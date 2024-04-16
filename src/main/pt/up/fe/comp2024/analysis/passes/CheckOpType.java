@@ -19,6 +19,7 @@ public class CheckOpType extends AnalysisVisitor {
     public void buildVisitor() {
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
         addVisit(Kind.BINARY_EXPR, this::visitBinaryExpr);
+        addVisit(Kind.IF_STMT, this::visitIfStmt);
     }
 
     private Void visitMethodDecl(JmmNode method, SymbolTable symTable){
@@ -95,6 +96,22 @@ public class CheckOpType extends AnalysisVisitor {
                 break;
         }
 
+        return null;
+    }
+
+    private Void visitIfStmt(JmmNode ifStmt, SymbolTable symTable){
+        JmmNode expr = ifStmt.getChild(0);
+
+            if (!expr.getKind().equals("BooleanExpr") || !expr.getKind().equals("BooleanLiteral")){
+                var message = String.format("Invalid if statement");
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(ifStmt),
+                        NodeUtils.getColumn(ifStmt),
+                        message,
+                        null)
+                );
+            }
         return null;
     }
 
