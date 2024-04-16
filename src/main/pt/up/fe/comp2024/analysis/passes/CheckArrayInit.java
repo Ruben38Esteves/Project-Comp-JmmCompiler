@@ -19,6 +19,7 @@ public class CheckArrayInit extends AnalysisVisitor{
     public void buildVisitor() {
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
         addVisit(Kind.ARRAY_INITIALIZATION, this::visitArrayInitialization);
+        addVisit(Kind.ARRAY_ACCESS_EXPR, this::visitArrayAccess);
     }
 
     private Void visitMethodDecl(JmmNode method, SymbolTable symTable){
@@ -81,6 +82,12 @@ public class CheckArrayInit extends AnalysisVisitor{
             }
         }
         System.out.println("cenas");
+        return null;
+    }
+
+    private Void visitArrayAccess(JmmNode arrayAccess, SymbolTable symTable){
+        SpecsCheck.checkNotNull(currentMethod, () -> "Expected method to be set");
+        JmmNode a = arrayAccess.getChild(0);
         return null;
     }
 }

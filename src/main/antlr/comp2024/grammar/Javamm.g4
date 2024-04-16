@@ -120,7 +120,7 @@ elseStmt
 
 expr
     : LPAREN expr RPAREN #Parenthesis //
-    | expr LBRACK expr RBRACK #ArrayAccessExpre //
+    | expr LBRACK expr RBRACK #ArrayAccessExpr //
     | expr op= ACCESS expr #MethodExpr //
     | op= NOT expr #UnaryExpr //
     | NEW name= ID LPAREN RPAREN #ClassInstance //
