@@ -88,6 +88,31 @@ public class CheckArrayInit extends AnalysisVisitor{
     private Void visitArrayAccess(JmmNode arrayAccess, SymbolTable symTable){
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected method to be set");
         JmmNode a = arrayAccess.getChild(0);
+        JmmNode b = arrayAccess.getChild(1);
+        for (var sym: symTable.getLocalVariables(currentMethod)){
+            if (!sym.getType().isArray()){
+                var message = String.format("%s is not an array", sym.getName());
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(arrayAccess),
+                        NodeUtils.getColumn(arrayAccess),
+                        message,
+                        null)
+                );
+            }
+            System.out.println(sym);
+        }
+
+        if (!b.getKind().equals("IntegerLiteral")){
+            var message = String.format("Cannot access array with %s", b.getKind());
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(arrayAccess),
+                    NodeUtils.getColumn(arrayAccess),
+                    message,
+                    null)
+            );
+        }
         return null;
     }
 }
