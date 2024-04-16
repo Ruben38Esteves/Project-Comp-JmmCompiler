@@ -31,19 +31,40 @@ public class CheckOpType extends AnalysisVisitor {
         // Retrieve the left and right operands
         JmmNode leftOperand = binaryExpr.getChild(0);
         JmmNode rightOperand = binaryExpr.getChild(1);
-        List<Symbol> list = symTable.getLocalVariables(currentMethod);
         String leftType = "";
         String rightType = "";
-        for (var a: list){
-            if (a.getName().equals(leftOperand.get("name"))){
-                leftType = a.getType().getName();
-            }
-            if (a.getName().equals(rightOperand.get("name"))){
-                rightType = a.getType().getName();
-            }
-        }
+
         // Perform type checking based on the operator
         String operator = binaryExpr.get("op");
+
+        for (var local: symTable.getLocalVariables(currentMethod)){
+            if (local.getName().equals(leftOperand.get("name"))){
+                if(local.getType().isArray()){
+                    var message = String.format("Cannot perform '%s' on '%s'", operator, rightType);
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(binaryExpr),
+                            NodeUtils.getColumn(binaryExpr),
+                            message,
+                            null)
+                    );
+                }
+                leftType = local.getType().getName();
+            }
+            if (local.getName().equals(rightOperand.get("name"))){
+                if(local.getType().isArray()){
+                    var message = String.format("Cannot perform '%s' on '%s'", operator, rightType);
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(binaryExpr),
+                            NodeUtils.getColumn(binaryExpr),
+                            message,
+                            null)
+                    );
+                }
+                rightType = local.getType().getName();
+            }
+        }
 
 
         // Perform type checking based on the operator
