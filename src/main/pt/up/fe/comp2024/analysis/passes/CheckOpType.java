@@ -35,11 +35,36 @@ public class CheckOpType extends AnalysisVisitor {
         String leftType = "";
         String rightType = "";
 
+        if(!leftOperand.getKind().equals("VarRefExpr")){
+            switch (leftOperand.getKind()){
+                case "IntegerLiteral":{
+                    leftType = "int";
+                    break;
+                }
+                case "BooleanLiteral":{
+                    leftType = "boolean";
+                    break;
+                }
+            }
+        }
+
+        if(!rightOperand.getKind().equals("VarRefExpr")){
+            switch (rightOperand.getKind()){
+                case "IntegerLiteral":{
+                    rightType = "int";
+                    break;
+                }
+                case "BooleanLiteral":{
+                    rightType = "boolean";
+                    break;
+                }
+            }
+        }
         // Perform type checking based on the operator
         String operator = binaryExpr.get("op");
 
         for (var local: symTable.getLocalVariables(currentMethod)){
-            if (local.getName().equals(leftOperand.get("name"))){
+            if (leftType.isEmpty() && local.getName().equals(leftOperand.get("name"))){
                 if(local.getType().isArray()){
                     var message = String.format("Cannot perform '%s' on '%s'", operator, rightType);
                     addReport(Report.newError(
@@ -52,7 +77,7 @@ public class CheckOpType extends AnalysisVisitor {
                 }
                 leftType = local.getType().getName();
             }
-            if (local.getName().equals(rightOperand.get("name"))){
+            if (rightType.isEmpty() && local.getName().equals(rightOperand.get("name"))){
                 if(local.getType().isArray()){
                     var message = String.format("Cannot perform '%s' on '%s'", operator, rightType);
                     addReport(Report.newError(
@@ -71,7 +96,7 @@ public class CheckOpType extends AnalysisVisitor {
         // Perform type checking based on the operator
         switch (operator) {
             case "*", "+", "-":
-                if (rightType.equals("boolean") || leftType.equals("boolean")){
+                if (!rightType.equals("int") || !leftType.equals("int")){
                     var message = String.format("Cannot perform '%s' on '%s'", operator, rightType);
                     addReport(Report.newError(
                             Stage.SEMANTIC,
@@ -83,7 +108,7 @@ public class CheckOpType extends AnalysisVisitor {
                 }
                 break;
             case "/": // separei para adicionar divisao por zero
-                if (rightType.equals("boolean") || leftType.equals("boolean")){
+                if (!rightType.equals("int") || !leftType.equals("int")){
                     var message = String.format("Cannot perform '%s' on '%s'", operator, rightType);
                     addReport(Report.newError(
                             Stage.SEMANTIC,
