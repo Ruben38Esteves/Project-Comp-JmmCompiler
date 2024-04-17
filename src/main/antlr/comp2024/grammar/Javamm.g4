@@ -122,6 +122,7 @@ expr
     : LPAREN expr RPAREN #Parenthesis //
     | expr LBRACK expr RBRACK #ArrayAccessExpr //
     | expr op= ACCESS expr #MethodExpr //
+    | op= ACCESS expr  #MethodExpr//
     | op= NOT expr #UnaryExpr //
     | NEW name= ID LPAREN RPAREN #ClassInstance //
     | NEW type expr #NewArray //
@@ -137,7 +138,6 @@ expr
     | value=(TRUE|FALSE) #BooleanLiteral //
     | name= ID #VarRefExpr //
     | name= ID methodCall #CallMethod //
-    | expr methodCall #CallMethod //
     | LBRACK ((expr)(',' expr)*)? RBRACK #ArrayInitialization
     ;
 
