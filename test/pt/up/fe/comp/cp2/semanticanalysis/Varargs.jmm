@@ -6,7 +6,7 @@ class Varargs {
         return a;
     }
 
-    public int varargs(int... a) {
+    public int varargs(int a, int b, int c) {
         return a[0];
     }
 }

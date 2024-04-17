@@ -35,34 +35,111 @@ public class CheckMethod extends AnalysisVisitor {
     }
 
     private Void visitMethodExpr(JmmNode methodExpr, SymbolTable symTable){
-        /*
         boolean exists = false;
-        for (var imports: symTable.getImports()) {
-            if (imports.equals(methodExpr.getChild(0).get("name"))) {
-                exists = true;
-                break;
-            }
-        }
+        boolean localAux = false;
+        List<Symbol> localVars = symTable.getLocalVariables(currentMethod);
+        List<String> imports = symTable.getImports();
         List<String> methods = symTable.getMethods();
-        var expr = methodExpr;
-        String name = expr.getChild(0).get("name");
-        if (// validar imports e lcocals){
-            //erro
-        }
-        expr = expr.getChild(1);
-        while(!expr.getKind().equals("CallMethod")){
-            name = expr.getChild(0).get("name");
-            if (!methods.contains(name)){
-                //erro
-            }
 
+        //se tiver imports passa
+        //se tiver numa classe que exrtende o import, passa
+
+        var object =  methodExpr.getChild(0);
+        String varType = "";
+        if (object.get("name").equals("this")){
+            varType = currentClass;
+            if(!methods.contains(methodExpr.getChild(1).get("name"))){
+                var message = String.format("");
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(methodExpr),
+                        NodeUtils.getColumn(methodExpr),
+                        message,
+                        null));
+                return null;
+
+            }
+        } else {
+            for (var localVar : localVars) {
+                if (localVar.getName().equals(object.get("name"))) {
+                    varType = localVar.getType().getName();
+                }
+            }
+        }
+
+        if (!varType.equals(currentClass)){
+            if(imports.contains(varType)){
+                return null;
+            }
+            var message = String.format("");
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(methodExpr),
+                    NodeUtils.getColumn(methodExpr),
+                    message,
+                    null));
+            return null;
+        }else if (imports.contains(symTable.getSuper())){
+            return null;
+        }
+
+
+
+        var expr = methodExpr;
+        expr = expr.getChild(1);
+
+        //todo checks nothing along path
+        while(!expr.getKind().equals("CallMethod")){
             expr = expr.getChild(1);
         }
 
+        if (!methods.contains(expr.get("name"))){
+            var message = String.format("%s was not declared", expr.get("name"));
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(expr),
+                    NodeUtils.getColumn(expr),
+                    message,
+                    null));
+            return null;
 
-    }
+        }
+        List<Symbol> params = symTable.getParameters(expr.get("name"));
+        var params_in_call = expr.getChild(0).getChildren();
 
-         */
+        if(params_in_call != null){
+            if(params_in_call.size() != params.size()){
+                var message = String.format("Incorrect argument amount");
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(expr),
+                        NodeUtils.getColumn(expr),
+                        message,
+                        null));
+                return null;
+
+            }
+        }
+
+        for (int i = 0; i < expr.getChild(0).getChildren().size(); i++){
+            var currentArgument = expr.getChild(0).getChild(i);
+            for (var localVar: localVars){
+                if (localVar.getName().equals(currentArgument.get("name"))){
+                    if (!localVar.getType().getName().equals(params.get(i).getType().getName())){
+                        var message = String.format("%s does not take %s as an argument", expr.get("name"), localVar.getType().getName());
+                        addReport(Report.newError(
+                                Stage.SEMANTIC,
+                                NodeUtils.getLine(currentArgument),
+                                NodeUtils.getColumn(currentArgument),
+                                message,
+                                null));
+                        return null;
+                    }
+                }
+            }
+
+        }
     return null;
+    }
 }
-}
+

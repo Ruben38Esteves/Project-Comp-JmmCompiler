@@ -2,6 +2,7 @@ package pt.up.fe.comp2024.analysis.passes;
 
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.Stage;
@@ -54,8 +55,30 @@ public class CheckEqualType extends AnalysisVisitor{
 
         //adaptar para chain de methods
         if(right.getKind().equals("MethodExpr")){
-            rightType = symTable.getReturnType(right.getChild(1).get("name")).getName();
-            System.out.println("dlakdlahdlkaj");
+            String var_name = right.getChild(0).get("name");
+            Type return_type = symTable.getReturnType(right.getChild(1).get("name"));
+            if(return_type != null){
+                rightType = return_type.getName();
+            }else{
+                for(var sym : symList){
+                    if(sym.getName().equals(var_name) && imports.contains(sym.getType().getName())){
+                        return null;
+                    }
+                    if(sym.getName().equals(var_name) && symTable.getSuper() != null ){
+                        if(sym.getType().getName().equals(symTable.getSuper()) && imports.contains(symTable.getSuper())){
+                            return null;
+                        }
+                    }
+                }
+                var message = String.format("Class %s not imported", var_name);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(assignStmt),
+                        NodeUtils.getColumn(assignStmt),
+                        message,
+                        null));
+                return null;
+            }
         }
 
         if(right.getKind().equals("IntegerLiteral")){
