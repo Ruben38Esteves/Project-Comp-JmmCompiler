@@ -42,11 +42,12 @@ public class JmmSymbolTableBuilder {
     }
 
     private static List<String> buildImports(JmmNode root){
+        List<String> imports = new ArrayList<>();
         if(root.getChildren(Kind.IMPORT_STMT).size() == 0){
-            return new ArrayList<>();
+            return imports;
         }
-        return root.getChildren(Kind.IMPORT_STMT).stream().map(import_statement -> import_statement.get("value")).toList();
-
+        root.getChildren(IMPORT_STMT).stream().forEach(import_statement -> imports.add(import_statement.get("ID")));
+        return imports;
     }
 
     private static Map<String, Type> buildReturnTypes(JmmNode classDecl) {

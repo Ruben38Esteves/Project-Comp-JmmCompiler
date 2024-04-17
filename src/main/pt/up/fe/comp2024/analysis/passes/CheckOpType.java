@@ -74,6 +74,7 @@ public class CheckOpType extends AnalysisVisitor {
                             message,
                             null)
                     );
+                    return null;
                 }
                 leftType = local.getType().getName();
             }
@@ -87,6 +88,7 @@ public class CheckOpType extends AnalysisVisitor {
                             message,
                             null)
                     );
+                    return null;
                 }
                 rightType = local.getType().getName();
             }
@@ -105,6 +107,7 @@ public class CheckOpType extends AnalysisVisitor {
                             message,
                             null)
                     );
+                    return null;
                 }
                 break;
             case "/": // separei para adicionar divisao por zero
@@ -117,6 +120,7 @@ public class CheckOpType extends AnalysisVisitor {
                             message,
                             null)
                     );
+                    return null;
                 }
                 break;
         }
@@ -136,6 +140,7 @@ public class CheckOpType extends AnalysisVisitor {
                         message,
                         null)
                 );
+                return null;
             }
         return null;
     }

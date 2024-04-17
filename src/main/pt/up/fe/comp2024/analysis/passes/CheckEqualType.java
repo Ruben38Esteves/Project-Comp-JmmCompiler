@@ -17,7 +17,7 @@ public class CheckEqualType extends AnalysisVisitor{
     @Override
     public void buildVisitor() {
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
-        addVisit(Kind.ASSIGN_STMT, this::visitStmt);
+        addVisit(Kind.ASSIGN_STMT, this::visitAssignStmt);
     }
 
     private Void visitMethodDecl(JmmNode method, SymbolTable symTable){
@@ -25,30 +25,112 @@ public class CheckEqualType extends AnalysisVisitor{
         return null;
     }
 
-    private Void visitStmt(JmmNode assignStmt, SymbolTable symTable){
+    private Void visitAssignStmt(JmmNode assignStmt, SymbolTable symTable){
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected method to be set");
         JmmNode left = assignStmt.getChild(0);
         JmmNode right = assignStmt.getChild(1);
         List<Symbol> symList = symTable.getLocalVariables(currentMethod);
+        List<String> imports = symTable.getImports();
         String rightType = "";
         String leftType = "";
+        boolean isLeftArray = false;
+        boolean isRightArray = false;
 
         for (var sym: symList){
             if (sym.getName().equals(left.get("name"))) {
                 leftType = sym.getType().getName();
+                isLeftArray = sym.getType().isArray();
             }
         }
 
-        if (leftType.equals("boolean")){
-            if (right.getKind().equals("IntegerLiteral")){
-                var message = String.format("Cannot perform int to '%s'", leftType);
+        if(right.getKind().equals("NewArray")){
+            rightType = right.getChild(0).get("name");
+            right = right.getChild(1);
+        }else if(right.getKind().equals("ClassInstance")){
+            rightType = right.get("name");
+        }
+
+        if(right.getKind().equals("IntegerLiteral")){
+            if(leftType.equals("int")){
+                return null;
+            }else {
+                var message = String.format("Cannot attribute int to '%s'", leftType);
                 addReport(Report.newError(
                         Stage.SEMANTIC,
                         NodeUtils.getLine(assignStmt),
                         NodeUtils.getColumn(assignStmt),
                         message,
                         null));
+                return null;
             }
+        }
+
+        if(right.getKind().equals("BooleanLiteral")){
+            if(leftType.equals("boolean")){
+                return null;
+            }else{
+                var message = String.format("Cannot attribute boolean to '%s'", leftType);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(assignStmt),
+                        NodeUtils.getColumn(assignStmt),
+                        message,
+                        null));
+                return null;
+            }
+        }
+
+        if(right.getKind().equals("ArrayInitialization")){
+            if(isLeftArray){
+                return null;
+            }else {
+                var message = String.format("Cannot attribute array to '%s'", leftType);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(assignStmt),
+                        NodeUtils.getColumn(assignStmt),
+                        message,
+                        null));
+                return null;
+            }
+        }
+
+
+
+        for (var sym: symList){
+            if (sym.getName().equals(right.get("name"))) {
+                rightType = sym.getType().getName();
+                isRightArray = sym.getType().isArray();
+            }
+        }
+
+        if(!leftType.equals(rightType)){
+            if(imports.contains(leftType)){
+                if (imports.contains(rightType)){
+                    return null;
+                }
+                if(leftType.equals(symTable.getSuper()) && rightType.equals(symTable.getClassName())){
+                    return null;
+                }
+            }
+            var message = String.format("Cannot attribute '%s' to '%s'", rightType, leftType);
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(assignStmt),
+                    NodeUtils.getColumn(assignStmt),
+                    message,
+                    null));
+            return null;
+        } else if (isLeftArray != isRightArray) {
+            var message = String.format("Cannot attribute '%s' to '%s' beacause of them is not an array", rightType, leftType);
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(assignStmt),
+                    NodeUtils.getColumn(assignStmt),
+                    message,
+                    null));
+            return null;
+
         }
 
 

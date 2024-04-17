@@ -32,6 +32,8 @@ public class CheckArrayInit extends AnalysisVisitor{
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected method to be set");
         String arrayName = arrayInitialization.getJmmParent().getChild(0).get("name");
         String arrayType = "";
+
+
         for (var local: symTable.getLocalVariables(currentMethod)){
             if(local.getName().equals(arrayName)){
                 System.out.println("cenas");
@@ -52,7 +54,6 @@ public class CheckArrayInit extends AnalysisVisitor{
         }
 
         for(var value : arrayInitialization.getChildren()){
-            System.out.println("batata");
             switch (arrayType){
                 case "int":{
                     if(!value.getKind().equals("IntegerLiteral")){
@@ -64,6 +65,7 @@ public class CheckArrayInit extends AnalysisVisitor{
                                 message,
                                 null)
                         );
+                        return null;
                     }
                     break;
                 }
@@ -77,12 +79,12 @@ public class CheckArrayInit extends AnalysisVisitor{
                                 message,
                                 null)
                         );
+                        return null;
                     }
                     break;
                 }
             }
         }
-        System.out.println("cenas");
         return null;
     }
 
@@ -100,6 +102,7 @@ public class CheckArrayInit extends AnalysisVisitor{
                         message,
                         null)
                 );
+                return null;
             }
             System.out.println(sym);
         }
@@ -113,23 +116,25 @@ public class CheckArrayInit extends AnalysisVisitor{
                     message,
                     null)
             );
+            return null;
         }
         return null;
     }
 
 
     // Vai falhar privados, esta bue especifico para o array dentro do while
-    private Void visitWhileStmt(JmmNode whileStmt, SymbolTable symTable){
+    private Void visitWhileStmt(JmmNode whileStmt, SymbolTable symTable) {
         JmmNode expr = whileStmt.getChild(0);
-        if (!expr.getKind().equals("BooleanExpr") || !expr.getKind().equals("BooleanLiteral")){
-                        var message = String.format(" in while loop");
-                        addReport(Report.newError(
-                                Stage.SEMANTIC,
-                                NodeUtils.getLine(whileStmt),
-                                NodeUtils.getColumn(whileStmt),
-                                message,
-                                null)
-                        );
+        if (!expr.getKind().equals("BooleanExpr") || !expr.getKind().equals("BooleanLiteral")) {
+            var message = String.format(" in while loop");
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(whileStmt),
+                    NodeUtils.getColumn(whileStmt),
+                    message,
+                    null)
+            );
+            return null;
         }
 
         return null;
