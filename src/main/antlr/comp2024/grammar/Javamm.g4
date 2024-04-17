@@ -137,7 +137,6 @@ expr
     | value=(TRUE|FALSE) #BooleanLiteral //
     | name= ID #VarRefExpr //
     | name= ID methodCall #CallMethod //
-    | expr methodCall #CallMethod //
     | LBRACK ((expr)(',' expr)*)? RBRACK #ArrayInitialization
     ;
 

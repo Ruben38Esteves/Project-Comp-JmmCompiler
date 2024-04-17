@@ -46,8 +46,16 @@ public class CheckEqualType extends AnalysisVisitor{
         if(right.getKind().equals("NewArray")){
             rightType = right.getChild(0).get("name");
             right = right.getChild(1);
-        }else if(right.getKind().equals("ClassInstance")){
+        }
+
+        if(right.getKind().equals("ClassInstance")){
             rightType = right.get("name");
+        }
+
+        //adaptar para chain de methods
+        if(right.getKind().equals("MethodExpr")){
+            rightType = symTable.getReturnType(right.getChild(1).get("name")).getName();
+            System.out.println("dlakdlahdlkaj");
         }
 
         if(right.getKind().equals("IntegerLiteral")){
@@ -96,13 +104,15 @@ public class CheckEqualType extends AnalysisVisitor{
         }
 
 
-
-        for (var sym: symList){
-            if (sym.getName().equals(right.get("name"))) {
-                rightType = sym.getType().getName();
-                isRightArray = sym.getType().isArray();
+        if(rightType.isEmpty()){
+            for (var sym: symList){
+                if (sym.getName().equals(right.get("name"))) {
+                    rightType = sym.getType().getName();
+                    isRightArray = sym.getType().isArray();
+                }
             }
         }
+
 
         if(!leftType.equals(rightType)){
             if(imports.contains(leftType)){
