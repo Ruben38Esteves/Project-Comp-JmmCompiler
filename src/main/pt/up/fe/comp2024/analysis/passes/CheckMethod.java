@@ -12,7 +12,9 @@ import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.specs.util.SpecsCheck;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiFunction;
 
 public class CheckMethod extends AnalysisVisitor {
@@ -26,6 +28,24 @@ public class CheckMethod extends AnalysisVisitor {
     }
 
     private Void visitClassDecl(JmmNode currClass, SymbolTable symTable){
+
+        // Check for duplicate imports
+        List<String> imports = symTable.getImports();
+        Set<String> seenImports = new HashSet<>();
+
+        for (String import_ : imports) {
+            if (!seenImports.add(import_)) {
+                var message = String.format("%s already imported", import_);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        1,
+                        1,
+                        message,
+                        null));
+            }
+        }
+
+
         currentClass = currClass.get("name");
         return null;
     }
@@ -40,6 +60,7 @@ public class CheckMethod extends AnalysisVisitor {
         List<Symbol> localVars = symTable.getLocalVariables(currentMethod);
         List<String> imports = symTable.getImports();
         List<String> methods = symTable.getMethods();
+
 
 
         var object =  methodExpr.getChild(0);
@@ -66,7 +87,10 @@ public class CheckMethod extends AnalysisVisitor {
             }
         }
 
+
+
         if (!varType.equals(currentClass)){
+            // If imported, no need to check method
             if(imports.contains(varType)){
                 return null;
             }
@@ -198,6 +222,12 @@ public class CheckMethod extends AnalysisVisitor {
                 return null;
             }
         }
+
+
+        // Check return
+
+
+
     return null;
     }
 }

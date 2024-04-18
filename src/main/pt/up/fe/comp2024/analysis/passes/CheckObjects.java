@@ -16,6 +16,7 @@ public class CheckObjects extends AnalysisVisitor {
     public void buildVisitor() {
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
         addVisit(Kind.CLASS_INSTANCE, this::visitClassInstance);
+        addVisit(Kind.VAR_DECL, this::visitVarDecl);
     }
 
     private Void visitMethodDecl(JmmNode method, SymbolTable symTable) {
@@ -43,6 +44,22 @@ public class CheckObjects extends AnalysisVisitor {
         }
 
         System.out.println("cenas");
+        return null;
+    }
+
+    private Void visitVarDecl(JmmNode varDecl,SymbolTable symTable){
+            var aa = varDecl.getChild(0);
+            if (aa.get("name").equals("int...")){
+                var message = String.format("%s cannot be declared as variable", aa.get("name"));
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(varDecl),
+                        NodeUtils.getColumn(varDecl),
+                        message,
+                        null)
+                );
+                return null;
+            }
         return null;
     }
 

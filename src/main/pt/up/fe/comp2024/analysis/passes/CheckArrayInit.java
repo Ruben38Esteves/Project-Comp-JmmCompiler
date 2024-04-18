@@ -36,7 +36,6 @@ public class CheckArrayInit extends AnalysisVisitor{
 
         for (var local: symTable.getLocalVariables(currentMethod)){
             if(local.getName().equals(arrayName)){
-                System.out.println("cenas");
                 if(!local.getType().isArray()){
                     var message = String.format("'%s' is not an Array", arrayName);
                     addReport(Report.newError(
@@ -122,11 +121,10 @@ public class CheckArrayInit extends AnalysisVisitor{
     }
 
 
-    // Vai falhar privados, esta bue especifico para o array dentro do while
     private Void visitWhileStmt(JmmNode whileStmt, SymbolTable symTable) {
         JmmNode expr = whileStmt.getChild(0);
         if (!expr.getKind().equals("BooleanExpr") || !expr.getKind().equals("BooleanLiteral")) {
-            var message = String.format(" in while loop");
+            var message = String.format("Expected boolean in while loop");
             addReport(Report.newError(
                     Stage.SEMANTIC,
                     NodeUtils.getLine(whileStmt),
