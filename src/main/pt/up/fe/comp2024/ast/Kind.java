@@ -27,12 +27,13 @@ public enum Kind {
     CLASS_INSTANCE,
     ARRAY_ACCESS_EXPR,
     METHOD_EXPR,
+    METHOD_CALL,
     CALL_METHOD;
 
 
 
     private static final Set<Kind> STATEMENTS = Set.of(ASSIGN_STMT, RETURN_STMT, WHILE_STATEMENT, IF_STMT);
-    private static final Set<Kind> EXPRESSIONS = Set.of(BINARY_EXPR, INTEGER_LITERAL, VAR_REF_EXPR, ARRAY_ACCESS_EXPR, METHOD_EXPR);
+    private static final Set<Kind> EXPRESSIONS = Set.of(BINARY_EXPR, INTEGER_LITERAL, VAR_REF_EXPR, ARRAY_ACCESS_EXPR, METHOD_EXPR, CALL_METHOD);
 
     private final String name;
 

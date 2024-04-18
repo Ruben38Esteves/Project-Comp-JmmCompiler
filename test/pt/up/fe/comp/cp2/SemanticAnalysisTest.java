@@ -140,6 +140,7 @@ public class SemanticAnalysisTest {
     public void varargs() {
         var result = TestUtils
                 .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/Varargs.jmm"));
+
         TestUtils.noErrors(result);
     }
 

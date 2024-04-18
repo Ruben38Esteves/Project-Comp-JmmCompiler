@@ -2,11 +2,13 @@ class Varargs {
 
     public int foo() {
         int a;
+        int b;
+        b = 10;
         a = this.varargs(10, 20, 30);
         return a;
     }
 
-    public int varargs(int a, int b, int c) {
+    public int varargs(int... a) {
         return a[0];
     }
 }
