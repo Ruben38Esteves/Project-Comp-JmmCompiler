@@ -83,8 +83,16 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
     private OllirExprResult visitVarRef(JmmNode node, Void unused) {
 
         var id = node.get("name");
+        String ollirType = "";
         Type type = TypeUtils.getExprType(node, table);
-        String ollirType = OptUtils.toOllirType(type);
+        if(type == null){
+            if(table.getImports().contains(id)){
+                ollirType = id;
+            }
+
+        }else{
+            ollirType = OptUtils.toOllirType(type);
+        }
 
         String code = id + ollirType;
 
@@ -92,11 +100,48 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
     }
 
     private OllirExprResult visitMethodExpr(JmmNode node, Void unused) {
+        node = node.getChild(1);
         var code = new StringBuilder();
-        var computation = new StringBuilder();
-        var returnType = node.getChild(1);
-        return null;
+        String caller = node.getParent().getChild(0).get("name");
+        String method_name = node.get("name");
+        String caller_type;
+        String invoke_type = "";
+        Boolean isAssigning;
+
+        if(caller.equals("this")){
+            caller_type = table.getClassName();
+        }
+        if(table.getImports().contains(caller)){
+            invoke_type = "invokestatic";
+            code.append(invoke_type).append("(").append(caller).append(", ").append("\"").append(method_name).append("\"");
+        }else{
+            //fazer para virtual
+        }
+
+        //get caller type
+
+        //handle params visit params
+        if(node.getChild(0).getChildren().size() > 0){
+            for(var param : node.getChild(0).getChildren()) {
+                code.append(", ");
+                Type param_type = TypeUtils.getExprType(param,table);
+                code.append(param.get("name")).append(OptUtils.toOllirType(param_type));
+            }
+        }
+        code.append(")");
+
+        //place return
+        if(invoke_type.equals("invokestatic")){
+            code.append(".V");
+        }
+
+        // fazer atribuicao
+
+        code.append(";");
+        return new OllirExprResult(code.toString());
     }
+
+
 
     /**
      * Default visitor. Visits every child node and return an empty result.
