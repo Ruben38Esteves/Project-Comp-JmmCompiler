@@ -25,6 +25,7 @@ public class CheckMethod extends AnalysisVisitor {
         addVisit(Kind.CLASS_DECL, this::visitClassDecl);
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
         addVisit(Kind.METHOD_EXPR, this::visitMethodExpr);
+        addVisit(Kind.RETURN_STMT, this::visitReturnStmt);
     }
 
     private Void visitClassDecl(JmmNode currClass, SymbolTable symTable){
@@ -232,6 +233,44 @@ public class CheckMethod extends AnalysisVisitor {
 
 
     return null;
+    }
+
+    private Void visitReturnStmt(JmmNode returnStmt, SymbolTable symTable){
+        System.out.println("AA");
+        String returnType = "";
+
+        // fetch expeccted return type
+        var parent = returnStmt.getJmmParent();
+        while (!parent.getKind().equals("MethodDecl")){
+            parent = parent.getJmmParent();
+        }
+        String methodName = parent.get("name");
+        String expectedReturnType = symTable.getReturnType(methodName).getName();
+
+
+        // check what it's trying to return
+        switch(returnStmt.getChild(0).getKind()){
+            case "BinaryExpr":
+            case "IntegerLiteral":
+                returnType = "int";
+                break;
+            case "BooleanExpr":
+            case "BooleanLiteral":
+                returnType = "bool";
+                break;
+        }
+
+        if (!returnType.equals(expectedReturnType)){
+            var message = String.format("%s is returning %s, expected %s", methodName, returnType, expectedReturnType);
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(returnStmt),
+                    NodeUtils.getColumn(returnStmt),
+                    message,
+                    null));
+        }
+
+        return null;
     }
 }
 
