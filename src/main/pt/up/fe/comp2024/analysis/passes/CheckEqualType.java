@@ -126,6 +126,23 @@ public class CheckEqualType extends AnalysisVisitor{
             }
         }
 
+        //----------------------------------------------
+        if (right.getKind().equals("BinaryExpr")){
+            if (leftType.equals("int")){
+                return null;
+            }else {
+                var message = String.format("Cannot attribute boolean to '%s'", leftType);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(assignStmt),
+                        NodeUtils.getColumn(assignStmt),
+                        message,
+                        null));
+                return null;
+            }
+
+        }
+        //--------------------------------------------
 
         if(rightType.isEmpty()){
             for (var sym: symList){
