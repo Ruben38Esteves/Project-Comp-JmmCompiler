@@ -80,6 +80,9 @@ public class CheckMethod extends AnalysisVisitor {
 
             }
         } else {
+            if(imports.contains(object.get("name"))){
+                varType = object.get("name");
+            }
             for (var localVar : localVars) {
                 if (localVar.getName().equals(object.get("name"))) {
                     varType = localVar.getType().getName();

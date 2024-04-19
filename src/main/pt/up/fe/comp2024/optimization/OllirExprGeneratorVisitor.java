@@ -30,6 +30,7 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         addVisit(INTEGER_LITERAL, this::visitInteger);
         addVisit(BOOLEAN_LITERAL, this::visitBoolean);
         addVisit(METHOD_EXPR, this::visitMethodExpr);
+        addVisit(CLASS_INSTANCE, this::visitClassInstance);
         // array access expr
         // class instance
         // array init
@@ -99,23 +100,32 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         return new OllirExprResult(code);
     }
 
+    private OllirExprResult visitClassInstance(JmmNode node, Void unused) {
+        System.out.println("fsfsfsfs");
+        return null;
+    }
+
     private OllirExprResult visitMethodExpr(JmmNode node, Void unused) {
         node = node.getChild(1);
         var code = new StringBuilder();
+        code.append("");
+        var computation = new StringBuilder();
         String caller = node.getParent().getChild(0).get("name");
         String method_name = node.get("name");
         String caller_type;
         String invoke_type = "";
         Boolean isAssigning;
 
-        if(caller.equals("this")){
-            caller_type = table.getClassName();
-        }
+
         if(table.getImports().contains(caller)){
             invoke_type = "invokestatic";
-            code.append(invoke_type).append("(").append(caller).append(", ").append("\"").append(method_name).append("\"");
+            computation.append(invoke_type).append("(").append(caller).append(", ").append("\"").append(method_name).append("\"");
         }else{
-            //fazer para virtual
+            if(caller.equals("this")){
+                caller_type = table.getClassName();
+            }else{
+                caller_type = OptUtils.toOllirType(TypeUtils.getExprType(node.getParent().getChild(0),table));
+            }
         }
 
         //get caller type
@@ -123,22 +133,22 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         //handle params visit params
         if(node.getChild(0).getChildren().size() > 0){
             for(var param : node.getChild(0).getChildren()) {
-                code.append(", ");
+                computation.append(", ");
                 Type param_type = TypeUtils.getExprType(param,table);
-                code.append(param.get("name")).append(OptUtils.toOllirType(param_type));
+                computation.append(param.get("name")).append(OptUtils.toOllirType(param_type));
             }
         }
-        code.append(")");
+        computation.append(")");
 
         //place return
         if(invoke_type.equals("invokestatic")){
-            code.append(".V");
+            computation.append(".V");
         }
 
         // fazer atribuicao
 
-        code.append(";");
-        return new OllirExprResult(code.toString());
+        computation.append(";");
+        return new OllirExprResult(code.toString(), computation.toString());
     }
 
 

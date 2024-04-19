@@ -265,6 +265,7 @@ public class JasminGenerator {
                 for(var arg : args){
                     code.append(getTypeJasmin(arg.getType()));
                 }
+                code.append(")").append(getTypeJasmin(call.getReturnType())).append(NL);
             }
             case invokespecial -> {
                 code.append("invokespecial ").append(className).append("/").append("<init>()V").append(NL);

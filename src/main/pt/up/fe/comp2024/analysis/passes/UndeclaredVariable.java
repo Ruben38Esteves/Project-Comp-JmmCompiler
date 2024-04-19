@@ -56,8 +56,12 @@ public class UndeclaredVariable extends AnalysisVisitor {
             return null;
         }
 
+        if(table.getImports().contains(varRefName)){
+            return null;
+        }
+
         // Create error report
-        var message = String.format("Variable '%s' does nott exist.", varRefName);
+        var message = String.format("Variable '%s' does not exist.", varRefName);
         addReport(Report.newError(
                 Stage.SEMANTIC,
                 NodeUtils.getLine(varRefExpr),
