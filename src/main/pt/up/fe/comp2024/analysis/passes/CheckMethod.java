@@ -252,6 +252,7 @@ public class CheckMethod extends AnalysisVisitor {
         switch(returnStmt.getChild(0).getKind()){
             case "BinaryExpr":
             case "IntegerLiteral":
+            case "ArrayAccessExpr":
                 returnType = "int";
                 break;
             case "BooleanExpr":
@@ -260,7 +261,14 @@ public class CheckMethod extends AnalysisVisitor {
                 break;
             case "VarRefExpr":
                 var name = returnStmt.getChild(0).get("name");
-                for (var sym: symTable.getLocalVariables(methodName)){
+                var params = symTable.getParameters(methodName);
+                var fields = symTable.getFields();
+                var localVars = symTable.getLocalVariables(methodName);
+                List<Symbol> allVars = new ArrayList<>();
+                allVars.addAll(params);
+                allVars.addAll(fields);
+                allVars.addAll(localVars);
+                for (var sym: allVars){
                     if (sym.getName().equals(name)){
                         returnType = sym.getType().getName();
                         break;
