@@ -258,6 +258,15 @@ public class CheckMethod extends AnalysisVisitor {
             case "BooleanLiteral":
                 returnType = "bool";
                 break;
+            case "VarRefExpr":
+                var name = returnStmt.getChild(0).get("name");
+                for (var sym: symTable.getLocalVariables(methodName)){
+                    if (sym.getName().equals(name)){
+                        returnType = sym.getType().getName();
+                        break;
+                    }
+                }
+                break;
         }
 
         if (!returnType.equals(expectedReturnType)){
