@@ -205,13 +205,31 @@ public class JasminGenerator {
     }
 
     private String generateLiteral(LiteralElement literal) {
-        return "ldc " + literal.getLiteral() + NL;
+        var value = literal.getLiteral();
+        var val = Integer.parseInt(value);
+        if (val >= -1 && val <= 5) {
+            return "iconst_" + val + NL;
+        } else if (val >= -128 && val <= 127) {
+            return "bipush " + val + NL;
+        } else if (val >= -32768 && val <= 32767) {
+            return "sipush " + val + NL;
+        } else {
+            return "ldc " + val + NL;
+        }
     }
 
     private String generateOperand(Operand operand) {
         // get register
         var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
-        return "iload " + reg + NL;
+        switch (operand.getType().getTypeOfElement()) {
+            case INT32, BOOLEAN -> {
+                return "iload " + reg + NL;
+            }
+            case ARRAYREF, OBJECTREF, CLASS, STRING -> {
+                return "aload " + reg + NL;
+            }
+            default -> throw new NotImplementedException(operand.getType().getTypeOfElement());
+        }
     }
 
     private String generateBinaryOp(BinaryOpInstruction binaryOp) {
@@ -251,47 +269,69 @@ public class JasminGenerator {
 
     private String generateCallInstr(CallInstruction call){
         var code = new StringBuilder();
-        var className = call.getOperands().toString().split(" ")[1].split("\\.")[0];
-        if(className.equals("This")){
+        var temp_code = new StringBuilder();
+        var className = call.getOperands().get(0).getType().toString().split("\\(")[1].split("\\)")[0];;
+        var reg = 0;
+        if(className.equals("this")){
             className = ollirResult.getOllirClass().getClassName();
         }
         switch (call.getInvocationType()){
             case invokestatic -> {
-                code.append("invokestatic ").append(className).append("/");
+                var varName = call.getOperands().toString().split(" ")[1].split("\\.")[0];
+                code.append("invokestatic ").append(varName).append("/");
                 var methodName = call.getMethodName().toString().split("\"")[1];
                 var args = call.getArguments();
                 code.append(methodName).append("(");
                 for(var arg : args){
+                    temp_code.append(generators.apply(arg));
                     code.append(getTypeJasmin(arg.getType()));
                 }
                 code.append(")").append(getTypeJasmin(call.getReturnType())).append(NL);
             }
             case invokespecial -> {
+                if(className.equals("This")){
+                    reg = currentMethod.getVarTable().get(className).getVirtualReg();
+                    className = ollirResult.getOllirClass().getClassName();
+                }else{
+                    var varName = call.getOperands().toString().split(" ")[1].split("\\.")[0];
+                    reg = currentMethod.getVarTable().get(varName).getVirtualReg();
+                }
+                code.append("aload ").append(reg).append(NL);
                 className = className.substring(0,1).toUpperCase() + className.substring(1);
-                code.append("invokespecial ").append(className).append("/").append("<init>()V").append(NL);
+                code.append("invokespecial ").append(className).append("/").append("<init>()V").append(NL).append("pop").append(NL);
+
             }
             case invokevirtual -> {
-                className = className.substring(0,1).toUpperCase() + className.substring(1);
+                if(className.equals("This")){
+                    reg = currentMethod.getVarTable().get(className).getVirtualReg();
+                    className = ollirResult.getOllirClass().getClassName();
+                }else{
+                    var varName = call.getOperands().toString().split(" ")[1].split("\\.")[0];
+                    reg = currentMethod.getVarTable().get(varName).getVirtualReg();
+                }
+                temp_code.append("aload ").append(reg).append(NL);
                 code.append("invokevirtual ").append(className).append("/");
                 var methodName = call.getMethodName().toString().split("\"")[1];
                 var args = call.getArguments();
                 code.append(methodName).append("(");
                 for(var arg : args){
+                    temp_code.append(generators.apply(arg));
                     code.append(getTypeJasmin(arg.getType()));
                 }
+                code.append(")").append(getTypeJasmin(call.getReturnType())).append(NL);
             }
             case NEW -> {
                 code.append("new ").append(className).append(NL);
                 code.append("dup").append(NL);
             }
         }
-
-        return code.toString();
+        temp_code.append(code);
+        return temp_code.toString();
     }
 
     private String generatePutInstr(PutFieldInstruction intr){
         var code = new StringBuilder();
-        code.append("aload_0").append(NL);
+        code.append("aload 0").append(NL);
         Operand field = intr.getField();
         String value = intr.getValue().toString().split(" ")[1].split("\\.")[0];
         code.append("ldc ").append(value).append(NL);
@@ -304,7 +344,7 @@ public class JasminGenerator {
 
     private String generateGetInstr(GetFieldInstruction intr){
         var code = new StringBuilder();
-        code.append("aload_0").append(NL);
+        code.append("aload 0").append(NL);
         Operand field = intr.getField();
         String className = ollirResult.getOllirClass().getClassName();
         String fieldName = field.getName();

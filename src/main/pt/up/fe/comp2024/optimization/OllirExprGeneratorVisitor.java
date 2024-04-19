@@ -103,7 +103,7 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         var code = new StringBuilder();
         var computation = new StringBuilder();
         var temp_variable = OptUtils.getTemp();
-        computation.append(temp_variable).append(".").append(node.get("name")).append(" :=").append(node.get("name")).append(" new(").append(node.get("name")).append(").").append(node.get("name")).append(";\n");
+        computation.append(temp_variable).append(".").append(node.get("name")).append(" :=.").append(node.get("name")).append(" new(").append(node.get("name")).append(").").append(node.get("name")).append(";\n");
         computation.append("invokespecial(");
         computation.append(temp_variable).append(".");
         computation.append(node.get("name")).append(",\"<init>\").V;\n");
@@ -133,10 +133,15 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
                 caller_type = OptUtils.toOllirType(TypeUtils.getExprType(node.getParent().getChild(0),table));
             }
             var temp_variable = OptUtils.getTemp();
-            code.append(temp_variable).append(caller_type);
+            code.append(temp_variable).append(OptUtils.toOllirType(table.getReturnType(method_name)));
             invoke_type = "invokevirtual";
-            computation.append(temp_variable).append(caller_type).append(" :=").append(caller_type).append(" ");
-            computation.append(invoke_type).append("(").append(caller).append(caller_type).append(", ").append("\"").append(method_name).append("\"");
+            computation.append(temp_variable).append(OptUtils.toOllirType(table.getReturnType(method_name)));
+            computation.append(" :=").append(OptUtils.toOllirType(table.getReturnType(method_name))).append(" ");
+            computation.append(invoke_type).append("(").append(caller);
+            if(!caller.equals("this")){
+                computation.append(caller_type);
+            }
+            computation.append(", ").append("\"").append(method_name).append("\"");
         }
 
         //get caller type
