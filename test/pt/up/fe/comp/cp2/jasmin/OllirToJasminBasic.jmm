@@ -24,3 +24,5 @@ class SymbolTable extends Quicksort {
 	}
 
 }
+
+        this.handleClassName();

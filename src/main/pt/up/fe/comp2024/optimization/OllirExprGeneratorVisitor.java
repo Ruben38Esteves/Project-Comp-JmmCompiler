@@ -32,8 +32,6 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         addVisit(BOOLEAN_LITERAL, this::visitBoolean);
         addVisit(METHOD_EXPR, this::visitMethodExpr);
         addVisit(CLASS_INSTANCE, this::visitClassInstance);
-        // array access expr
-        // class instance
         // array init
         setDefaultVisit(this::defaultVisit);
     }
@@ -102,8 +100,15 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
     }
 
     private OllirExprResult visitClassInstance(JmmNode node, Void unused) {
-        System.out.println("fsfsfsfs");
-        return null;
+        var code = new StringBuilder();
+        var computation = new StringBuilder();
+        var temp_variable = OptUtils.getTemp();
+        computation.append(temp_variable).append(".").append(node.get("name")).append(" :=").append(node.get("name")).append(" new(").append(node.get("name")).append(").").append(node.get("name")).append(";\n");
+        computation.append("invokespecial(");
+        computation.append(temp_variable).append(".");
+        computation.append(node.get("name")).append(",\"<init>\").V;\n");
+        code.append(temp_variable).append(".").append(node.get("name"));
+        return new OllirExprResult(code.toString(),computation.toString());
     }
 
     private OllirExprResult visitMethodExpr(JmmNode node, Void unused) {
@@ -123,13 +128,15 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
             computation.append(invoke_type).append("(").append(caller).append(", ").append("\"").append(method_name).append("\"");
         }else{
             if(caller.equals("this")){
-                caller_type = table.getClassName();
+                caller_type = "." + table.getClassName();
             }else{
                 caller_type = OptUtils.toOllirType(TypeUtils.getExprType(node.getParent().getChild(0),table));
             }
+            var temp_variable = OptUtils.getTemp();
+            code.append(temp_variable).append(caller_type);
             invoke_type = "invokevirtual";
-
-            computation.append(invoke_type).append("(").append(caller).append(", ").append("\"").append(method_name).append("\"");
+            computation.append(temp_variable).append(caller_type).append(" :=").append(caller_type).append(" ");
+            computation.append(invoke_type).append("(").append(caller).append(caller_type).append(", ").append("\"").append(method_name).append("\"");
         }
 
         //get caller type
@@ -147,6 +154,8 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         //place return
         if(invoke_type.equals("invokestatic")){
             computation.append(".V");
+        }else{
+            computation.append(OptUtils.toOllirType(table.getReturnType(node.get("name"))));
         }
 
         // fazer atribuicao
