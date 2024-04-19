@@ -34,6 +34,7 @@ public class CheckOpType extends AnalysisVisitor {
         JmmNode rightOperand = binaryExpr.getChild(1);
         String leftType = "";
         String rightType = "";
+        String operator = binaryExpr.get("op");
 
         if(!leftOperand.getKind().equals("VarRefExpr")){
             switch (leftOperand.getKind()){
@@ -47,21 +48,6 @@ public class CheckOpType extends AnalysisVisitor {
                 }
             }
         }
-
-        if(!rightOperand.getKind().equals("VarRefExpr")){
-            switch (rightOperand.getKind()){
-                case "IntegerLiteral":{
-                    rightType = "int";
-                    break;
-                }
-                case "BooleanLiteral":{
-                    rightType = "boolean";
-                    break;
-                }
-            }
-        }
-        // Perform type checking based on the operator
-        String operator = binaryExpr.get("op");
 
         for (var local: symTable.getLocalVariables(currentMethod)){
             if (leftType.isEmpty() && local.getName().equals(leftOperand.get("name"))){
@@ -78,6 +64,30 @@ public class CheckOpType extends AnalysisVisitor {
                 }
                 leftType = local.getType().getName();
             }
+        }
+
+        if(!rightOperand.getKind().equals("VarRefExpr")){
+            switch (rightOperand.getKind()){
+                case "IntegerLiteral":{
+                    rightType = "int";
+                    break;
+                }
+                case "BooleanLiteral":{
+                    rightType = "boolean";
+                    break;
+                }
+                case "MethodExpr":{
+                    String caller = rightOperand.getChild(0).get("name");
+                    if(symTable.getImports().contains(caller)){
+                        rightType = null; // fix
+                    }
+                    rightType = symTable.getReturnType(rightOperand.getChild(1).get("name")).getName();
+                }
+            }
+        }
+        // Perform type checking based on the operator
+
+        for (var local: symTable.getLocalVariables(currentMethod)){
             if (rightType.isEmpty() && local.getName().equals(rightOperand.get("name"))){
                 if(local.getType().isArray()){
                     var message = String.format("Cannot perform '%s' on '%s'", operator, rightType);
