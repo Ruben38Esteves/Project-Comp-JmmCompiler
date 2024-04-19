@@ -252,7 +252,6 @@ public class JasminGenerator {
     private String generateCallInstr(CallInstruction call){
         var code = new StringBuilder();
         var className = call.getOperands().toString().split(" ")[1].split("\\.")[0];
-        className = className.substring(0,1).toUpperCase() + className.substring(1);
         if(className.equals("This")){
             className = ollirResult.getOllirClass().getClassName();
         }
@@ -268,9 +267,11 @@ public class JasminGenerator {
                 code.append(")").append(getTypeJasmin(call.getReturnType())).append(NL);
             }
             case invokespecial -> {
+                className = className.substring(0,1).toUpperCase() + className.substring(1);
                 code.append("invokespecial ").append(className).append("/").append("<init>()V").append(NL);
             }
             case invokevirtual -> {
+                className = className.substring(0,1).toUpperCase() + className.substring(1);
                 code.append("invokevirtual ").append(className).append("/");
                 var methodName = call.getMethodName().toString().split("\"")[1];
                 var args = call.getArguments();
