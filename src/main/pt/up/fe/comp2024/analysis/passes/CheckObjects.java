@@ -42,8 +42,6 @@ public class CheckObjects extends AnalysisVisitor {
                 );
             }
         }
-
-        System.out.println("cenas");
         return null;
     }
 

@@ -93,7 +93,7 @@ methodDecl locals[boolean isPublic=false]
 //(params+=param(',' params+=param)*)?
 
 stmt
-    : expr SEMI #Something //S
+    : expr SEMI #Something //
     | expr EQUALS expr SEMI #AssignStmt //
     | RETURN expr SEMI #ReturnStmt //
     | LCURLY (stmt)* RCURLY #Tobereplaced //

@@ -28,6 +28,8 @@ public enum Kind {
     ARRAY_ACCESS_EXPR,
     METHOD_EXPR,
     METHOD_CALL,
+    NEW_ARRAY,
+    SOMETHING,
     CALL_METHOD;
 
 
