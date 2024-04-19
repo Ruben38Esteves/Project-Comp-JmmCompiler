@@ -10,6 +10,7 @@ import pt.up.fe.comp2024.ast.Kind;
 import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.specs.util.SpecsCheck;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class CheckOpType extends AnalysisVisitor {
@@ -32,9 +33,27 @@ public class CheckOpType extends AnalysisVisitor {
         // Retrieve the left and right operands
         JmmNode leftOperand = binaryExpr.getChild(0);
         JmmNode rightOperand = binaryExpr.getChild(1);
+        var params = symTable.getParameters(currentMethod);
+        List<String> param_types = new ArrayList<>();
+        var locals = symTable.getLocalVariables(currentMethod);
+        List<String> locals_types = new ArrayList<>();
+        var fields = symTable.getFields();
+        List<String> fields_types = new ArrayList<>();
         String leftType = "";
         String rightType = "";
         String operator = binaryExpr.get("op");
+
+        for(var param : params){
+            param_types.add(param.getName());
+        }
+
+        for(var local : locals){
+            locals_types.add(local.getName());
+        }
+
+        for(var field : fields){
+            fields_types.add(field.getName());
+        }
 
         if(!leftOperand.getKind().equals("VarRefExpr")){
             switch (leftOperand.getKind()){
@@ -48,7 +67,62 @@ public class CheckOpType extends AnalysisVisitor {
                 }
             }
         }
+        if(leftType.isEmpty()){
+            if(locals_types.contains(leftOperand.get("name"))){
+                for(var local : locals){
+                    if(local.getName().equals(leftOperand.get("name"))){
+                        if(local.getType().isArray()){
+                            var message = String.format("Cannot perform '%s' on '%s'", operator, rightType);
+                            addReport(Report.newError(
+                                    Stage.SEMANTIC,
+                                    NodeUtils.getLine(binaryExpr),
+                                    NodeUtils.getColumn(binaryExpr),
+                                    message,
+                                    null)
+                            );
+                        }
+                        leftType = local.getType().getName();
+                        break;
+                    }
+                }
+            } else if (param_types.contains(leftOperand.get("name"))) {
+                for(var param : params){
+                    if(param.getName().equals(leftOperand.get("name"))){
+                        if(param.getType().isArray()){
+                            var message = String.format("Cannot perform '%s' on '%s'", operator, rightType);
+                            addReport(Report.newError(
+                                    Stage.SEMANTIC,
+                                    NodeUtils.getLine(binaryExpr),
+                                    NodeUtils.getColumn(binaryExpr),
+                                    message,
+                                    null)
+                            );
+                        }
+                        leftType = param.getType().getName();
+                        break;
+                    }
+                }
+            } else if (fields_types.contains(leftOperand.get("name"))) {
+                for(var field : fields){
+                    if(field.getName().equals(leftOperand.get("name"))){
+                        if(field.getType().isArray()){
+                            var message = String.format("Cannot perform '%s' on '%s'", operator, rightType);
+                            addReport(Report.newError(
+                                    Stage.SEMANTIC,
+                                    NodeUtils.getLine(binaryExpr),
+                                    NodeUtils.getColumn(binaryExpr),
+                                    message,
+                                    null)
+                            );
+                        }
+                        leftType = field.getType().getName();
+                        break;
+                    }
+                }
+            }
+        }
 
+        /*
         for (var local: symTable.getLocalVariables(currentMethod)){
             if (leftType.isEmpty() && local.getName().equals(leftOperand.get("name"))){
                 if(local.getType().isArray()){
@@ -66,6 +140,8 @@ public class CheckOpType extends AnalysisVisitor {
             }
         }
 
+         */
+
         if(!rightOperand.getKind().equals("VarRefExpr")){
             switch (rightOperand.getKind()){
                 case "IntegerLiteral":{
@@ -78,10 +154,54 @@ public class CheckOpType extends AnalysisVisitor {
                 }
                 case "MethodExpr":{
                     String caller = rightOperand.getChild(0).get("name");
-                    if(symTable.getImports().contains(caller)){
-                        rightType = null; // fix
+                    String called = rightOperand.getChild(1).get("name");
+                    if(caller.equals("this")){
+                        if(symTable.getMethods().contains(called)){
+                            rightType = symTable.getReturnType(called).getName();
+                            break;
+                        }
+                    }else if(symTable.getImports().contains(caller)){
+                        rightType = leftType;
+                        break;
+                    } else if(param_types.contains(caller)){
+                        for(var param : params){
+                            if(param.getName().equals(caller)){
+                                rightType = param.getType().getName();
+                                break;
+                            }
+                        }
+                    }else if(locals_types.contains(caller)){
+                        for(var local : locals){
+                            if(local.getName().equals(caller)){
+                                rightType = local.getType().getName();
+                                break;
+                            }
+                        }
+                    }else if(fields_types.contains(caller)){
+                        for(var field : fields){
+                            if(field.getName().equals(caller)){
+                                rightType = field.getType().getName();
+                                break;
+                            }
+                        }
                     }
-                    rightType = symTable.getReturnType(rightOperand.getChild(1).get("name")).getName();
+                    if(symTable.getImports().contains(rightType)){
+                        rightType = leftType;
+                        break;
+                    }
+                    if(symTable.getClassName().equals(rightType) && symTable.getMethods().contains(caller)){
+                        rightType = symTable.getReturnType(caller).getName();
+                        break;
+                    }
+                    var message = String.format("'%s' cant be called", called);
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(binaryExpr),
+                            NodeUtils.getColumn(binaryExpr),
+                            message,
+                            null)
+                    );
+                    return null;
                 }
             }
         }
