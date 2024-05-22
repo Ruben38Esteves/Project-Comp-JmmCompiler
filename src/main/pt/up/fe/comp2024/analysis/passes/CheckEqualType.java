@@ -21,6 +21,81 @@ public class CheckEqualType extends AnalysisVisitor{
         addVisit(Kind.ASSIGN_STMT, this::visitAssignStmt);
     }
 
+    private String getMethodCallType(JmmNode methodCall, SymbolTable table){
+        String callerType = getVarRefType(methodCall.getChild(0), table);
+        if(callerType == null){
+            var message = String.format("Error getting Variable");
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(methodCall),
+                    NodeUtils.getColumn(methodCall),
+                    message,
+                    null));
+            return null;
+        }
+        if(table.getImports().contains(callerType)){
+            return "assume_correct";
+        }
+        String methodName = methodCall.getChild(1).get("name");
+        if(callerType.equals(table.getClassName())){
+            return table.getReturnType(methodName).getName();
+        }
+        return null;
+    }
+
+    private String getVarRefType(JmmNode varRefExpr, SymbolTable table){
+        String varName = varRefExpr.get("name");
+        //this
+        if(varName.equals("this")){
+            return table.getClassName();
+        }
+        //locals
+        for(Symbol sym: table.getLocalVariables(currentMethod)){
+            if(sym.getName().equals(varName)){
+                if(sym.getType().isArray()){
+                    return sym.getType().getName() + "_array";
+                }
+                return sym.getType().getName();
+            }
+        }
+        //params
+        for(Symbol sym: table.getParameters(currentMethod)){
+            if(sym.getName().equals(varName)){
+                if(sym.getType().isArray()){
+                    return sym.getType().getName() + "_array";
+                }
+                return sym.getType().getName();
+            }
+        }
+        //fields
+        for(Symbol sym: table.getFields()){
+            if(sym.getName().equals(varName)){
+                if(sym.getType().isArray()){
+                    return sym.getType().getName() + " array";
+                }
+                return sym.getType().getName();
+            }
+        }
+
+        for(String imported : table.getImports()){
+            if(imported.equals(varName)){
+                return varName;
+            }else{
+                var message = String.format("'%s' is not imported",varName);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(varRefExpr),
+                        NodeUtils.getColumn(varRefExpr),
+                        message,
+                        null));
+                return null;
+            }
+        }
+        return null;
+        //imports
+
+    }
+
     private Void visitMethodDecl(JmmNode method, SymbolTable symTable){
         currentMethod = method.get("name");
         return null;
@@ -28,8 +103,119 @@ public class CheckEqualType extends AnalysisVisitor{
 
     private Void visitAssignStmt(JmmNode assignStmt, SymbolTable symTable){
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected method to be set");
-        JmmNode left = assignStmt.getChild(0);
-        JmmNode right = assignStmt.getChild(1);
+        JmmNode leftOperand = assignStmt.getChild(0);
+        JmmNode rightOperand = assignStmt.getChild(1);
+
+        if(!leftOperand.getKind().equals("VarRefExpr")){
+            var message = String.format("Left is not a variable");
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(assignStmt),
+                    NodeUtils.getColumn(assignStmt),
+                    message,
+                    null));
+            return null;
+        }
+
+        String leftType = getVarRefType(leftOperand, symTable);
+        if(leftType == null){
+            var message = String.format("Left is not propperly defined");
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(assignStmt),
+                    NodeUtils.getColumn(assignStmt),
+                    message,
+                    null));
+            return null;
+        }
+        String rightType = "";
+
+        switch (rightOperand.getKind()){
+            case "IntegerLiteral":{
+                rightType = "int";
+                break;
+            }
+            case "BooleanLiteral":{
+                rightType = "boolean";
+                break;
+            }
+            case "VarRefExpr":{
+                rightType = getVarRefType(rightOperand,symTable);
+                if(rightType == null){
+                    var message = String.format("Left is not a variable");
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(assignStmt),
+                            NodeUtils.getColumn(assignStmt),
+                            message,
+                            null));
+                    return null;
+                }
+                break;
+            }
+            case "MethodExpr":{
+                rightType = getMethodCallType(rightOperand, symTable);
+                if(rightType == null){
+                    var message = String.format("Left is not a variable");
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(assignStmt),
+                            NodeUtils.getColumn(assignStmt),
+                            message,
+                            null));
+                    return null;
+                }
+                break;
+            }
+            case "ClassInstance":{
+                rightType = rightOperand.get("name");
+                if(symTable.getImports().contains(rightType) || symTable.getClassName().equals(rightType)){
+                    break;
+                }else{
+                    var message = String.format("'%s' was not imported",rightType);
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(assignStmt),
+                            NodeUtils.getColumn(assignStmt),
+                            message,
+                            null));
+                    return null;
+                }
+            }
+            case "ArrayInitialization":{
+                // vai ser preciso mudar caso arrays nao sejam so de ints
+                rightType = "int_array";
+                break;
+            }
+        }
+
+        if(symTable.getImports().contains(rightType)){
+            rightType = leftType;
+        }
+
+        if(rightType.equals("assume_correct")){
+            rightType = leftType;
+        }
+
+
+        if(leftType.equals(rightType)){
+            return null;
+        }else{
+            if(leftType.equals(symTable.getClassName()) && rightType.equals(symTable.getSuper()) && symTable.getImports().contains(symTable.getSuper())){
+                return null;
+            }
+
+            var message = String.format("Cannot attribute '%s to '%s'",rightType, leftType);
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(assignStmt),
+                    NodeUtils.getColumn(assignStmt),
+                    message,
+                    null));
+            return null;
+        }
+
+        /*
         List<Symbol> symList = symTable.getLocalVariables(currentMethod);
         List<String> imports = symTable.getImports();
         String rightType = "";
@@ -182,9 +368,8 @@ public class CheckEqualType extends AnalysisVisitor{
             return null;
 
         }
-
-
         return null;
+        */
     }
 
 }

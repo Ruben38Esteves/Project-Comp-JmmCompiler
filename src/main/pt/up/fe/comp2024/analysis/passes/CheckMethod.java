@@ -28,6 +28,81 @@ public class CheckMethod extends AnalysisVisitor {
         addVisit(Kind.RETURN_STMT, this::visitReturnStmt);
     }
 
+    private String getMethodCallType(JmmNode methodCall, SymbolTable table){
+        String callerType = getVarRefType(methodCall.getChild(0), table);
+        if(callerType == null){
+            var message = String.format("Error getting Variable");
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(methodCall),
+                    NodeUtils.getColumn(methodCall),
+                    message,
+                    null));
+            return null;
+        }
+        if(table.getImports().contains(callerType)){
+            return "assume_correct";
+        }
+        String methodName = methodCall.getChild(1).get("name");
+        if(callerType.equals(table.getClassName())){
+            return table.getReturnType(methodName).getName();
+        }
+        return null;
+    }
+
+    private String getVarRefType(JmmNode varRefExpr, SymbolTable table){
+        String varName = varRefExpr.get("name");
+        //this
+        if(varName.equals("this")){
+            return table.getClassName();
+        }
+        //locals
+        for(Symbol sym: table.getLocalVariables(currentMethod)){
+            if(sym.getName().equals(varName)){
+                if(sym.getType().isArray()){
+                    return sym.getType().getName() + "_array";
+                }
+                return sym.getType().getName();
+            }
+        }
+        //params
+        for(Symbol sym: table.getParameters(currentMethod)){
+            if(sym.getName().equals(varName)){
+                if(sym.getType().isArray()){
+                    return sym.getType().getName() + "_array";
+                }
+                return sym.getType().getName();
+            }
+        }
+        //fields
+        for(Symbol sym: table.getFields()){
+            if(sym.getName().equals(varName)){
+                if(sym.getType().isArray()){
+                    return sym.getType().getName() + " array";
+                }
+                return sym.getType().getName();
+            }
+        }
+
+        for(String imported : table.getImports()){
+            if(imported.equals(varName)){
+                return varName;
+            }else{
+                var message = String.format("'%s' is not imported",varName);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(varRefExpr),
+                        NodeUtils.getColumn(varRefExpr),
+                        message,
+                        null));
+                return null;
+            }
+        }
+        return null;
+        //imports
+
+    }
+
     private Void visitClassDecl(JmmNode currClass, SymbolTable symTable){
 
         // Check for duplicate imports
@@ -57,7 +132,14 @@ public class CheckMethod extends AnalysisVisitor {
     }
 
     private Void visitMethodExpr(JmmNode methodExpr, SymbolTable symTable){
-
+        String callerType = getVarRefType(methodExpr.getChild(0),symTable);
+        if(callerType.equals("this")){
+            if(symTable.getMethods().contains(methodExpr.getChild(1).get("name"))){
+                //cacaca
+            }
+        }
+        return null;
+        /*
         List<Symbol> localVars = symTable.getLocalVariables(currentMethod);
         List<String> imports = symTable.getImports();
         List<String> methods = symTable.getMethods();
@@ -233,6 +315,8 @@ public class CheckMethod extends AnalysisVisitor {
 
 
     return null;
+
+         */
     }
 
     private Void visitReturnStmt(JmmNode returnStmt, SymbolTable symTable){

@@ -30,6 +30,16 @@ public class CheckOpType extends AnalysisVisitor {
 
     private String getMethodCallType(JmmNode methodCall, SymbolTable table){
         String callerType = getVarRefType(methodCall.getChild(0), table);
+        if(callerType == null){
+            var message = String.format("Error getting Variable");
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(methodCall),
+                    NodeUtils.getColumn(methodCall),
+                    message,
+                    null));
+            return null;
+        }
         if(table.getImports().contains(callerType)){
             return "assume_correct";
         }
@@ -71,6 +81,12 @@ public class CheckOpType extends AnalysisVisitor {
                     return sym.getType().getName() + " array";
                 }
                 return sym.getType().getName();
+            }
+        }
+
+        for(String imported : table.getImports()){
+            if(imported.equals(varName)){
+                return varName;
             }
         }
         return null;

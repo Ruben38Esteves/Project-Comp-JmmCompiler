@@ -37,24 +37,61 @@ public class CheckArrayInit extends AnalysisVisitor{
         //locals
         for(Symbol sym: table.getLocalVariables(currentMethod)){
             if(sym.getName().equals(varName)){
+                if(sym.getType().isArray()){
+                    return sym.getType().getName() + "_array";
+                }
                 return sym.getType().getName();
             }
         }
         //params
         for(Symbol sym: table.getParameters(currentMethod)){
             if(sym.getName().equals(varName)){
+                if(sym.getType().isArray()){
+                    return sym.getType().getName() + "_array";
+                }
                 return sym.getType().getName();
             }
         }
         //fields
         for(Symbol sym: table.getFields()){
             if(sym.getName().equals(varName)){
+                if(sym.getType().isArray()){
+                    return sym.getType().getName() + "_array";
+                }
                 return sym.getType().getName();
+            }
+        }
+
+        for(String imported : table.getImports()){
+            if(imported.equals(varName)){
+                return varName;
             }
         }
         return null;
         //imports
 
+    }
+
+    private String getMethodCallType(JmmNode methodCall, SymbolTable table){
+        String callerType = getVarRefType(methodCall.getChild(0), table);
+        if(callerType == null){
+            var message = String.format("Error getting Variable");
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(methodCall),
+                    NodeUtils.getColumn(methodCall),
+                    message,
+                    null));
+            return null;
+        }
+        if(table.getImports().contains(callerType)){
+            return "assume_correct";
+        }
+        String methodName = methodCall.getChild(1).get("name");
+        if(callerType.equals(table.getClassName())){
+            return table.getReturnType(methodName).getName();
+        }
+        return null;
     }
 
     private Void visitArrayInitialization(JmmNode arrayInitialization, SymbolTable symTable){
@@ -118,10 +155,10 @@ public class CheckArrayInit extends AnalysisVisitor{
 
     private Void visitArrayAccess(JmmNode arrayAccess, SymbolTable symTable){
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected method to be set");
-        JmmNode a = arrayAccess.getChild(0);
-        JmmNode b = arrayAccess.getChild(1);
+        JmmNode name = arrayAccess.getChild(0);
+        JmmNode access = arrayAccess.getChild(1);
         for (Symbol sym: symTable.getLocalVariables(currentMethod)){
-            if(sym.getName().equals(a.get("name"))){
+            if(sym.getName().equals(name.get("name"))){
                 if(!sym.getType().isArray()){
                     var message = String.format("%s is not an array", sym.getName());
                     addReport(Report.newError(
@@ -135,20 +172,37 @@ public class CheckArrayInit extends AnalysisVisitor{
                 }
             }
         }
+        String accessType = "";
 
-        if (!b.getKind().equals("IntegerLiteral")){
-            if(!getVarRefType(b,symTable).equals("int")){
-                var message = String.format("Cannot access array with %s", b.getKind());
-                addReport(Report.newError(
-                        Stage.SEMANTIC,
-                        NodeUtils.getLine(arrayAccess),
-                        NodeUtils.getColumn(arrayAccess),
-                        message,
-                        null)
-                );
-                return null;
+        switch (access.getKind()){
+            case "IntegerLiteral":{
+                accessType = "int";
+                break;
             }
+            case "BooleanLiteral":{
+                accessType = "boolean";
+                break;
+            }
+            case "VarRefExpr":{
+                accessType = getVarRefType(access, symTable);
+                break;
+            }
+            case "MethodExpr":{
+                accessType = getMethodCallType(access, symTable);
+                break;
+            }
+        }
 
+        if(!accessType.equals("int")){
+            var message = String.format("Cannot access array with %s", access.getKind());
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(arrayAccess),
+                    NodeUtils.getColumn(arrayAccess),
+                    message,
+                    null)
+            );
+            return null;
         }
         return null;
     }
