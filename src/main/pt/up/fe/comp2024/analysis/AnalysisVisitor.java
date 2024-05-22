@@ -1,5 +1,6 @@
 package pt.up.fe.comp2024.analysis;
 
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
@@ -27,7 +28,6 @@ public abstract class AnalysisVisitor extends PreorderJmmVisitor<SymbolTable, Vo
     protected List<Report> getReports() {
         return reports;
     }
-
 
     @Override
     public List<Report> analyze(JmmNode root, SymbolTable table) {

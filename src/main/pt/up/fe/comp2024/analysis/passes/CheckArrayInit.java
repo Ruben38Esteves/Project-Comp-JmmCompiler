@@ -28,6 +28,35 @@ public class CheckArrayInit extends AnalysisVisitor{
         return null;
     }
 
+    private String getVarRefType(JmmNode varRefExpr, SymbolTable table){
+        String varName = varRefExpr.get("name");
+        //this
+        if(varName.equals("this")){
+            return table.getClassName();
+        }
+        //locals
+        for(Symbol sym: table.getLocalVariables(currentMethod)){
+            if(sym.getName().equals(varName)){
+                return sym.getType().getName();
+            }
+        }
+        //params
+        for(Symbol sym: table.getParameters(currentMethod)){
+            if(sym.getName().equals(varName)){
+                return sym.getType().getName();
+            }
+        }
+        //fields
+        for(Symbol sym: table.getFields()){
+            if(sym.getName().equals(varName)){
+                return sym.getType().getName();
+            }
+        }
+        return null;
+        //imports
+
+    }
+
     private Void visitArrayInitialization(JmmNode arrayInitialization, SymbolTable symTable){
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected method to be set");
         String arrayName = arrayInitialization.getJmmParent().getChild(0).get("name");
@@ -91,9 +120,25 @@ public class CheckArrayInit extends AnalysisVisitor{
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected method to be set");
         JmmNode a = arrayAccess.getChild(0);
         JmmNode b = arrayAccess.getChild(1);
-        for (var sym: symTable.getLocalVariables(currentMethod)){
-            if (!sym.getType().isArray()){
-                var message = String.format("%s is not an array", sym.getName());
+        for (Symbol sym: symTable.getLocalVariables(currentMethod)){
+            if(sym.getName().equals(a.get("name"))){
+                if(!sym.getType().isArray()){
+                    var message = String.format("%s is not an array", sym.getName());
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(arrayAccess),
+                            NodeUtils.getColumn(arrayAccess),
+                            message,
+                            null)
+                    );
+                    return null;
+                }
+            }
+        }
+
+        if (!b.getKind().equals("IntegerLiteral")){
+            if(!getVarRefType(b,symTable).equals("int")){
+                var message = String.format("Cannot access array with %s", b.getKind());
                 addReport(Report.newError(
                         Stage.SEMANTIC,
                         NodeUtils.getLine(arrayAccess),
@@ -103,19 +148,7 @@ public class CheckArrayInit extends AnalysisVisitor{
                 );
                 return null;
             }
-            System.out.println(sym);
-        }
 
-        if (!b.getKind().equals("IntegerLiteral")){
-            var message = String.format("Cannot access array with %s", b.getKind());
-            addReport(Report.newError(
-                    Stage.SEMANTIC,
-                    NodeUtils.getLine(arrayAccess),
-                    NodeUtils.getColumn(arrayAccess),
-                    message,
-                    null)
-            );
-            return null;
         }
         return null;
     }

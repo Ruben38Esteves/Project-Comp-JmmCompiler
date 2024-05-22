@@ -34,7 +34,7 @@ public class JasminGenerator {
 
     public JasminGenerator(OllirResult ollirResult) {
         this.ollirResult = ollirResult;
-
+        System.out.println(ollirResult.getOllirCode());
         reports = new ArrayList<>();
         code = null;
         currentMethod = null;

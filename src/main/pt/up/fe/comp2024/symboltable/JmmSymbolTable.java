@@ -38,7 +38,6 @@ public class JmmSymbolTable implements SymbolTable {
         this.imports = imports;
         this.superClass = superClass;
         this.my_fields = fields;
-        System.out.println("FIELDS: " + my_fields);
     }
 
 
@@ -59,16 +58,6 @@ public class JmmSymbolTable implements SymbolTable {
     }
     @Override
     public List<Symbol> getFields() {
-        /*
-        List<Symbol> myFields = this.fields;
-        if(!this.fields.isEmpty()){
-            System.out.println("FIELDS: " + myFields);
-            return Collections.unmodifiableList(this.fields);
-        }
-        System.out.println("FIELDS: " + myFields);
-        return Collections.emptyList();
-
-         */
         return Collections.unmodifiableList(my_fields);
     }
     @Override

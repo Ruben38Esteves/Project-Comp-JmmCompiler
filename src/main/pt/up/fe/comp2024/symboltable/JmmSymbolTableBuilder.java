@@ -19,6 +19,7 @@ public class JmmSymbolTableBuilder {
 
 
     public static JmmSymbolTable build(JmmNode root) {
+        System.out.println(root.toTree());
 
         var classDecl = root.getChildren(Kind.CLASS_DECL).get(0);
         SpecsCheck.checkArgument(Kind.CLASS_DECL.check(classDecl), () -> "Expected a class declaration: " + classDecl);

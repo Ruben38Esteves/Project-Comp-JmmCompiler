@@ -32,6 +32,7 @@ public class CheckOpType extends AnalysisVisitor {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected method to be set");
         // Retrieve the left and right operands
         JmmNode leftOperand = binaryExpr.getChild(0);
+        System.out.println(visit(leftOperand,symTable));
         JmmNode rightOperand = binaryExpr.getChild(1);
         var params = symTable.getParameters(currentMethod);
         List<String> param_types = new ArrayList<>();
