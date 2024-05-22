@@ -22,6 +22,8 @@ public class CheckOpType extends AnalysisVisitor {
         addVisit(Kind.BINARY_EXPR, this::visitBinaryExpr);
         addVisit(Kind.BOOLEAN_EXPR, this::visitBooleanExpr);
         addVisit(Kind.IF_STMT, this::visitIfStmt);
+        addVisit(Kind.ELSE_STMT, this::visitElseStmt);
+        addVisit(Kind.WHILE_STATEMENT, this::visitWhileStmt);
     }
 
     private Void visitMethodDecl(JmmNode method, SymbolTable symTable){
@@ -630,6 +632,39 @@ public class CheckOpType extends AnalysisVisitor {
                 );
                 return null;
             }
+        return null;
+    }
+
+    private Void visitElseStmt(JmmNode elseStmt, SymbolTable symTable){
+        if(elseStmt.getParent().getKind().equals("ifChainStatemnt")){
+            return null;
+        }else{
+            var message = String.format("Else missing If statement");
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(elseStmt),
+                    NodeUtils.getColumn(elseStmt),
+                    message,
+                    null)
+            );
+            return null;
+        }
+    }
+
+    private Void visitWhileStmt(JmmNode whileStmt, SymbolTable symTable){
+        JmmNode expr = whileStmt.getChild(0);
+
+        if (!expr.getKind().equals("BooleanExpr") || !expr.getKind().equals("BooleanLiteral")){
+            var message = String.format("Invalid if statement");
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(whileStmt),
+                    NodeUtils.getColumn(whileStmt),
+                    message,
+                    null)
+            );
+            return null;
+        }
         return null;
     }
 
