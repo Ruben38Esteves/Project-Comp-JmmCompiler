@@ -36,6 +36,7 @@ public class TypeUtils {
 
         Type type = switch (kind) {
             case BINARY_EXPR -> getBinExprType(expr);
+            case BOOLEAN_EXPR -> getBoolExprType(expr);
             case VAR_REF_EXPR -> getVarExprType(expr, table);
             case INTEGER_LITERAL -> new Type(INT_TYPE_NAME, false);
             case BOOLEAN_LITERAL -> new Type(BOOLEAN_TYPE_NAME, false);
@@ -56,6 +57,16 @@ public class TypeUtils {
             case "+", "*", "/", "-" -> new Type(INT_TYPE_NAME, false);
             default ->
                     throw new RuntimeException("Unknown operator '" + operator + "' of expression '" + binaryExpr + "'");
+        };
+    }
+
+    private static Type getBoolExprType(JmmNode booleanExpr){
+        String operator = booleanExpr.get("op");
+
+        return switch (operator) {
+            case "&&", "||", "<", ">" -> new Type(BOOLEAN_TYPE_NAME, false);
+            default ->
+                    throw new RuntimeException("Unknown operator '" + operator + "' of expression '" + booleanExpr + "'");
         };
     }
 

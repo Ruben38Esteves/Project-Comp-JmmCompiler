@@ -46,7 +46,8 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         //addVisit(CALL_METHOD, this::visitMethodCall);
         //addVisit(METHOD_CALL, this::visitMethodCall);
         addVisit(METHOD_EXPR, this::visitMethodExpr);
-
+        addVisit(IF_CHAIN_STATEMENT, this::visitIfStmt);
+        addVisit(WHILE_STATEMENT, this::visitWhileStmt);
         setDefaultVisit(this::defaultVisit);
     }
 
@@ -249,6 +250,42 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
     private String visitMethodExpr(JmmNode node, Void unused){
         var to_return = exprVisitor.visit(node);
         return to_return.getCode() + to_return.getComputation();
+    }
+
+    private String visitIfStmt(JmmNode node, Void unused){
+        StringBuilder code = new StringBuilder();
+        JmmNode if_node = node.getChild(0);
+        JmmNode else_node = node.getChild(1);
+        OllirExprResult exprResult = exprVisitor.visit(if_node.getChild(0));
+        code.append(exprResult.getComputation());
+        code.append("if (").append(exprResult.getCode()).append(") goto ").append("true_0;").append(NL);
+        for(JmmNode stmt : else_node.getChild(0).getChildren()){
+            code.append(visit(stmt));
+        }
+        code.append("goto end_0;").append(NL);
+        code.append("true_0:").append(NL);
+        for(JmmNode stmt : if_node.getChild(1).getChildren()){
+
+            code.append(visit(stmt));
+        }
+        code.append("end_0:").append(NL);
+        return code.toString();
+
+    }
+
+    private String visitWhileStmt(JmmNode node, Void unused){
+        StringBuilder code = new StringBuilder();
+        OllirExprResult exprResult = exprVisitor.visit(node.getChild(0));
+        code.append(exprResult.getComputation()).append(NL);
+        code.append("if (").append(exprResult.getCode()).append(") goto ").append("whilebody_0;").append(NL);
+        code.append("goto endwhile_0;").append(NL);
+        code.append("whilebody_0:").append(NL);
+        for(JmmNode stmt : node.getChild(1).getChildren()){
+            code.append(visit(stmt));
+        }
+        code.append("if (").append(exprResult.getCode()).append(") goto ").append("whilebody_0;").append(NL);
+        code.append("endwhile_0:");
+        return code.toString();
     }
 
     /**

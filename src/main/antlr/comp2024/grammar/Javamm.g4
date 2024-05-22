@@ -96,7 +96,7 @@ stmt
     : expr SEMI #Something //
     | expr EQUALS expr SEMI #AssignStmt //
     | RETURN expr SEMI #ReturnStmt //
-    | LCURLY (stmt)* RCURLY #Tobereplaced //
+    | LCURLY (stmt)* RCURLY #CodeBlock //
     | ifStmt (elseIfStmt)* elseStmt #IfChainStatement //
     | 'while' LPAREN expr RPAREN stmt #WhileStatement //
     ;

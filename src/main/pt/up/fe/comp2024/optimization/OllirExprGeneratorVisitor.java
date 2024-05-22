@@ -32,6 +32,7 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
     protected void buildVisitor() {
         addVisit(VAR_REF_EXPR, this::visitVarRef);
         addVisit(BINARY_EXPR, this::visitBinExpr);
+        addVisit(BOOLEAN_EXPR, this::visitBoolExpr);
         addVisit(INTEGER_LITERAL, this::visitInteger);
         addVisit(BOOLEAN_LITERAL, this::visitBoolean);
         addVisit(METHOD_EXPR, this::visitMethodExpr);
@@ -84,6 +85,33 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
 
         return new OllirExprResult(code, computation);
     }
+
+    private OllirExprResult visitBoolExpr(JmmNode node, Void unused) {
+        var lhs = visit(node.getJmmChild(0));
+        var rhs = visit(node.getJmmChild(1));
+
+        StringBuilder computation = new StringBuilder();
+
+        // code to compute the children
+        computation.append(lhs.getComputation());
+        computation.append(rhs.getComputation());
+
+        // code to compute self
+        Type resType = TypeUtils.getExprType(node, table);
+        String resOllirType = OptUtils.toOllirType(resType);
+        String code = OptUtils.getTemp() + resOllirType;
+
+        computation.append(code).append(SPACE)
+                .append(ASSIGN).append(resOllirType).append(SPACE)
+                .append(lhs.getCode()).append(SPACE);
+
+        Type type = TypeUtils.getExprType(node, table);
+        computation.append(node.get("op")).append(OptUtils.toOllirType(type)).append(SPACE)
+                .append(rhs.getCode()).append(END_STMT);
+
+        return new OllirExprResult(code, computation);
+    }
+
 
 
     private OllirExprResult visitVarRef(JmmNode node, Void unused) {
