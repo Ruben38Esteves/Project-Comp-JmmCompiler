@@ -28,8 +28,117 @@ public class CheckOpType extends AnalysisVisitor {
         return null;
     }
 
+    private String getMethodCallType(JmmNode methodCall, SymbolTable table){
+        return null;
+    }
+
+    private String getVarRefType(JmmNode varRefExpr, SymbolTable table){
+        String varName = varRefExpr.get("name");
+        //this
+        if(varName.equals("this")){
+            return table.getClassName();
+        }
+        //locals
+        for(Symbol sym: table.getLocalVariables(currentMethod)){
+            if(sym.getName().equals(varName)){
+                if(sym.getType().isArray()){
+                    return sym.getType().getName() + " array";
+                }
+                return sym.getType().getName();
+            }
+        }
+        //params
+        for(Symbol sym: table.getParameters(currentMethod)){
+            if(sym.getName().equals(varName)){
+                if(sym.getType().isArray()){
+                    return sym.getType().getName() + " array";
+                }
+                return sym.getType().getName();
+            }
+        }
+        //fields
+        for(Symbol sym: table.getFields()){
+            if(sym.getName().equals(varName)){
+                if(sym.getType().isArray()){
+                    return sym.getType().getName() + " array";
+                }
+                return sym.getType().getName();
+            }
+        }
+        return null;
+        //imports
+
+    }
+
     private Void visitBinaryExpr(JmmNode binaryExpr, SymbolTable symTable) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected method to be set");
+
+        JmmNode leftOperand = binaryExpr.getChild(0);
+        JmmNode rightOperand = binaryExpr.getChild(1);
+        String leftType = "";
+        String rightType = "";
+
+        switch (leftOperand.getKind()){
+            case "IntegerLiteral":{
+                leftType = "int";
+                break;
+            }
+            case "BooleanLiteral":{
+                leftType = "boolean";
+                break;
+            }
+            case "VarRefExpr":{
+                leftType = getVarRefType(leftOperand,symTable);
+                break;
+            }
+        }
+
+        switch (rightOperand.getKind()){
+            case "IntegerLiteral":{
+                rightType = "int";
+                break;
+            }
+            case "BooleanLiteral":{
+                rightType = "boolean";
+                break;
+            }
+            case "VarRefExpr":{
+                rightType = getVarRefType(rightOperand,symTable);
+                break;
+            }
+        }
+        String op =binaryExpr.get("op");
+        if(op.equals("*") || op.equals("/") || op.equals("+") || op.equals("-")){
+            if(leftType.equals("int") && rightType.equals("int")){
+                return null;
+            }else{
+                var message = String.format("Cannot perform '%s' on '%s'", op, rightType);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(binaryExpr),
+                        NodeUtils.getColumn(binaryExpr),
+                        message,
+                        null)
+                );
+            }
+        }
+        if(op.equals("||") || op.equals("&&") || op.equals("<") || op.equals(">")){
+            if(leftType.equals("boolean") && rightType.equals("boolean")){
+                return null;
+            }else{
+                var message = String.format("Cannot perform '%s' on '%s'", op, rightType);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(binaryExpr),
+                        NodeUtils.getColumn(binaryExpr),
+                        message,
+                        null)
+                );
+            }
+        }
+
+
+        /*
         // Retrieve the left and right operands
         JmmNode leftOperand = binaryExpr.getChild(0);
         System.out.println(visit(leftOperand,symTable));
@@ -122,26 +231,6 @@ public class CheckOpType extends AnalysisVisitor {
                 }
             }
         }
-
-        /*
-        for (var local: symTable.getLocalVariables(currentMethod)){
-            if (leftType.isEmpty() && local.getName().equals(leftOperand.get("name"))){
-                if(local.getType().isArray()){
-                    var message = String.format("Cannot perform '%s' on '%s'", operator, rightType);
-                    addReport(Report.newError(
-                            Stage.SEMANTIC,
-                            NodeUtils.getLine(binaryExpr),
-                            NodeUtils.getColumn(binaryExpr),
-                            message,
-                            null)
-                    );
-                    return null;
-                }
-                leftType = local.getType().getName();
-            }
-        }
-
-         */
 
         if(!rightOperand.getKind().equals("VarRefExpr")){
             switch (rightOperand.getKind()){
@@ -256,6 +345,9 @@ public class CheckOpType extends AnalysisVisitor {
                 break;
         }
 
+        return null;
+
+         */
         return null;
     }
 
