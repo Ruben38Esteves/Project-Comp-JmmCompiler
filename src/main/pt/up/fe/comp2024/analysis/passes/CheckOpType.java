@@ -20,6 +20,7 @@ public class CheckOpType extends AnalysisVisitor {
     public void buildVisitor() {
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
         addVisit(Kind.BINARY_EXPR, this::visitBinaryExpr);
+        addVisit(Kind.BOOLEAN_EXPR, this::visitBooleanExpr);
         addVisit(Kind.IF_STMT, this::visitIfStmt);
     }
 
@@ -94,9 +95,7 @@ public class CheckOpType extends AnalysisVisitor {
 
     }
 
-    private Void visitBinaryExpr(JmmNode binaryExpr, SymbolTable symTable) {
-        SpecsCheck.checkNotNull(currentMethod, () -> "Expected method to be set");
-
+    private String getBinaryExprType(JmmNode binaryExpr, SymbolTable symTable){
         JmmNode leftOperand = binaryExpr.getChild(0);
         JmmNode rightOperand = binaryExpr.getChild(1);
         String leftType = "";
@@ -119,6 +118,10 @@ public class CheckOpType extends AnalysisVisitor {
                 leftType = getMethodCallType(leftOperand, symTable);
                 break;
             }
+            case "BinaryExpr":{
+                leftType = getBinaryExprType(leftOperand, symTable);
+                break;
+            }
         }
 
         switch (rightOperand.getKind()){
@@ -136,6 +139,222 @@ public class CheckOpType extends AnalysisVisitor {
             }
             case "MethodExpr":{
                 rightType = getMethodCallType(rightOperand, symTable);
+                break;
+            }
+            case "BinaryExpr":{
+                rightType = getBinaryExprType(rightOperand, symTable);
+                break;
+            }
+        }
+
+        if(leftType.equals("assume_correct")){
+            if(rightType.equals("assume_correct")){
+                return null;
+            }else{
+                leftType = rightType;
+            }
+        }else{
+            if(rightType.equals("assume_correct")){
+                rightType = leftType;
+            }
+        }
+
+        String op =binaryExpr.get("op");
+        if(op.equals("*") || op.equals("/") || op.equals("+") || op.equals("-")){
+            if(leftType.equals("int") && rightType.equals("int")){
+                return "int";
+            }else{
+                var message = String.format("Cannot perform '%s' on '%s'", op, rightType);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(binaryExpr),
+                        NodeUtils.getColumn(binaryExpr),
+                        message,
+                        null)
+                );
+            }
+        }
+        if(op.equals("||") || op.equals("&&") || op.equals("<") || op.equals(">")){
+            if(leftType.equals("boolean") && rightType.equals("boolean")){
+                return "boolean";
+            }else{
+                var message = String.format("Cannot perform '%s' on '%s'", op, rightType);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(binaryExpr),
+                        NodeUtils.getColumn(binaryExpr),
+                        message,
+                        null)
+                );
+            }
+        }
+        return null;
+    }
+
+    private String getBoolExprType(JmmNode booleanExpr, SymbolTable symTable){
+        SpecsCheck.checkNotNull(currentMethod, () -> "Expected method to be set");
+
+        JmmNode leftOperand = booleanExpr.getChild(0);
+        JmmNode rightOperand = booleanExpr.getChild(1);
+        String leftType = "";
+        String rightType = "";
+
+        switch (leftOperand.getKind()){
+            case "IntegerLiteral":{
+                leftType = "int";
+                var message = String.format("Found a Integer in a boolean expression");
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(booleanExpr),
+                        NodeUtils.getColumn(booleanExpr),
+                        message,
+                        null)
+                );
+                return null;
+            }
+            case "BooleanLiteral":{
+                leftType = "boolean";
+                break;
+            }
+            case "VarRefExpr":{
+                leftType = getVarRefType(leftOperand, symTable);
+                break;
+            }
+            case "MethodExpr":{
+                leftType = getMethodCallType(leftOperand, symTable);
+                break;
+            }
+            case "BinaryExpr":{
+                leftType = getBinaryExprType(leftOperand, symTable);
+                break;
+            }
+
+        }
+
+        switch (rightOperand.getKind()){
+            case "IntegerLiteral":{
+                rightType = "int";
+                var message = String.format("Found a Integer in a boolean expression");
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(booleanExpr),
+                        NodeUtils.getColumn(booleanExpr),
+                        message,
+                        null)
+                );
+                return null;
+            }
+            case "BooleanLiteral":{
+                rightType = "boolean";
+                break;
+            }
+            case "VarRefExpr":{
+                rightType = getVarRefType(rightOperand,symTable);
+                break;
+            }
+            case "MethodExpr":{
+                rightType = getMethodCallType(rightOperand, symTable);
+                break;
+            }
+        }
+
+        if(leftType.equals("assume_correct")){
+            if(rightType.equals("assume_correct")){
+                return null;
+            }else{
+                leftType = rightType;
+            }
+        }else{
+            if(rightType.equals("assume_correct")){
+                rightType = leftType;
+            }
+        }
+
+        String op = booleanExpr.get("op");
+        if(op.equals("||") || op.equals("&&") || op.equals("<") || op.equals(">")){
+            if(leftType.equals("boolean") && rightType.equals("boolean")){
+                return "boolean";
+            }else{
+                var message = String.format("Cannot perform '%s' on '%s'", op, rightType);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(booleanExpr),
+                        NodeUtils.getColumn(booleanExpr),
+                        message,
+                        null)
+                );
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private Void visitBinaryExpr(JmmNode binaryExpr, SymbolTable symTable) {
+        SpecsCheck.checkNotNull(currentMethod, () -> "Expected method to be set");
+
+        JmmNode leftOperand = binaryExpr.getChild(0);
+        JmmNode rightOperand = binaryExpr.getChild(1);
+        String leftType = "";
+        String rightType = "";
+
+        switch (leftOperand.getKind()){
+            case "IntegerLiteral":{
+                leftType = "int";
+                break;
+            }
+            case "BooleanLiteral":{
+                leftType = "boolean";
+                var message = String.format("Found a boolean in a binary expression");
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(binaryExpr),
+                        NodeUtils.getColumn(binaryExpr),
+                        message,
+                        null)
+                );
+                return null;
+            }
+            case "VarRefExpr":{
+                leftType = getVarRefType(leftOperand, symTable);
+                break;
+            }
+            case "MethodExpr":{
+                leftType = getMethodCallType(leftOperand, symTable);
+                break;
+            }
+            case "BinaryExpr":{
+                leftType = getBinaryExprType(leftOperand, symTable);
+                break;
+            }
+        }
+
+        switch (rightOperand.getKind()){
+            case "IntegerLiteral":{
+                rightType = "int";
+                break;
+            }
+            case "BooleanLiteral":{
+                rightType = "boolean";
+                var message = String.format("Found a boolean in a binary expression");
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(binaryExpr),
+                        NodeUtils.getColumn(binaryExpr),
+                        message,
+                        null)
+                );
+                return null;
+            }
+            case "VarRefExpr":{
+                rightType = getVarRefType(rightOperand,symTable);
+                break;
+            }
+            case "MethodExpr":{
+                rightType = getMethodCallType(rightOperand, symTable);
+                break;
+            }
+            case "BinaryExpr":{
+                rightType = getBinaryExprType(rightOperand, symTable);
                 break;
             }
         }
@@ -165,6 +384,7 @@ public class CheckOpType extends AnalysisVisitor {
                         message,
                         null)
                 );
+                return null;
             }
         }
         if(op.equals("||") || op.equals("&&") || op.equals("<") || op.equals(">")){
@@ -410,6 +630,99 @@ public class CheckOpType extends AnalysisVisitor {
                 );
                 return null;
             }
+        return null;
+    }
+
+    private Void visitBooleanExpr(JmmNode booleanExpr, SymbolTable symTable){
+        SpecsCheck.checkNotNull(currentMethod, () -> "Expected method to be set");
+
+        JmmNode leftOperand = booleanExpr.getChild(0);
+        JmmNode rightOperand = booleanExpr.getChild(1);
+        String leftType = "";
+        String rightType = "";
+
+        switch (leftOperand.getKind()){
+            case "IntegerLiteral":{
+                leftType = "int";
+                var message = String.format("Found a Integer in a boolean expression");
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(booleanExpr),
+                        NodeUtils.getColumn(booleanExpr),
+                        message,
+                        null)
+                );
+                return null;
+            }
+            case "BooleanLiteral":{
+                leftType = "boolean";
+                break;
+            }
+            case "VarRefExpr":{
+                leftType = getVarRefType(leftOperand, symTable);
+                break;
+            }
+            case "MethodExpr":{
+                leftType = getMethodCallType(leftOperand, symTable);
+                break;
+            }
+        }
+
+        switch (rightOperand.getKind()){
+            case "IntegerLiteral":{
+                rightType = "int";
+                var message = String.format("Found a Integer in a boolean expression");
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(booleanExpr),
+                        NodeUtils.getColumn(booleanExpr),
+                        message,
+                        null)
+                );
+                return null;
+            }
+            case "BooleanLiteral":{
+                rightType = "boolean";
+                break;
+            }
+            case "VarRefExpr":{
+                rightType = getVarRefType(rightOperand,symTable);
+                break;
+            }
+            case "MethodExpr":{
+                rightType = getMethodCallType(rightOperand, symTable);
+                break;
+            }
+        }
+
+        if(leftType.equals("assume_correct")){
+            if(rightType.equals("assume_correct")){
+                return null;
+            }else{
+                leftType = rightType;
+            }
+        }else{
+            if(rightType.equals("assume_correct")){
+                rightType = leftType;
+            }
+        }
+
+        String op = booleanExpr.get("op");
+        if(op.equals("||") || op.equals("&&") || op.equals("<") || op.equals(">")){
+            if(leftType.equals("boolean") && rightType.equals("boolean")){
+                return null;
+            }else{
+                var message = String.format("Cannot perform '%s' on '%s'", op, rightType);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(booleanExpr),
+                        NodeUtils.getColumn(booleanExpr),
+                        message,
+                        null)
+                );
+                return null;
+            }
+        }
         return null;
     }
 

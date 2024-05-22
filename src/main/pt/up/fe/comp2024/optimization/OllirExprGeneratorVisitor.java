@@ -1,10 +1,14 @@
 package pt.up.fe.comp2024.optimization;
 
 import org.specs.comp.ollir.Ollir;
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
+import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp.jmm.report.Stage;
+import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.comp2024.ast.TypeUtils;
 
 import static pt.up.fe.comp2024.ast.Kind.*;
@@ -35,6 +39,8 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         // array init
         setDefaultVisit(this::defaultVisit);
     }
+
+
 
 
     private OllirExprResult visitInteger(JmmNode node, Void unused) {
@@ -151,7 +157,15 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
             for(var param : node.getChild(0).getChildren()) {
                 computation.append(", ");
                 Type param_type = TypeUtils.getExprType(param,table);
-                computation.append(param.get("name")).append(OptUtils.toOllirType(param_type));
+                if(param.getKind().equals("IntegerLiteral")){
+                    computation.append(param.get("value")).append(OptUtils.toOllirType(param_type));
+                } else if (param.getKind().equals("BinaryExpr")) {
+                    var bnrexpr = visit(param);
+                    computation.append(bnrexpr.getCode());
+                    code.append(bnrexpr.getComputation());
+                } else{
+                    computation.append(param.get("name")).append(OptUtils.toOllirType(param_type));
+                }
             }
         }
         computation.append(")");

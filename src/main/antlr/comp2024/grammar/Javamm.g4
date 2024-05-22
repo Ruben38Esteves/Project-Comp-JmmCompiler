@@ -84,7 +84,7 @@ param
     ;
 
 methodDecl locals[boolean isPublic=false]
-    : 'public'? 'static' type name=ID LPAREN (param(',' param)*)? RPAREN LCURLY varDecl* stmt* RCURLY
+    : (PUBLIC {$isPublic=true;})? isStatic='static' type name=ID LPAREN (param(',' param)*)? RPAREN LCURLY varDecl* stmt* RCURLY
     |(PUBLIC {$isPublic=true;})?
         type name=ID
         LPAREN (param(',' param)*)? RPAREN
@@ -126,10 +126,8 @@ expr
     | op= NOT expr #UnaryExpr //
     | NEW name= ID LPAREN RPAREN #ClassInstance //
     | NEW type expr #NewArray //
-    | expr op= MUL expr #BinaryExpr //
-    | expr op= DIV expr #BinaryExpr //
-    | expr op= ADD expr #BinaryExpr //
-    | expr op= SUB expr #BinaryExpr //
+    | expr op= (MUL | DIV) expr #BinaryExpr //
+    | expr op= (ADD | SUB) expr #BinaryExpr //
     | expr op= LT expr #BooleanExpr //
     | expr op= GT expr #BooleanExpr //
     | expr op= AND expr #BooleanExpr //

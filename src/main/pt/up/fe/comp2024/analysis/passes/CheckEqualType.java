@@ -3,6 +3,7 @@ package pt.up.fe.comp2024.analysis.passes;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
+import pt.up.fe.comp.jmm.ast.AJmmNode;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.Stage;
@@ -11,6 +12,7 @@ import pt.up.fe.comp2024.ast.Kind;
 import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.specs.util.SpecsCheck;
 
+import java.util.ArrayList;
 import java.util.List;
 public class CheckEqualType extends AnalysisVisitor{
     private String currentMethod;
@@ -216,6 +218,28 @@ public class CheckEqualType extends AnalysisVisitor{
                     null));
             return null;
         }
+        List<String> locals = new ArrayList<>();
+        for(Symbol sym : symTable.getLocalVariables(currentMethod)){
+            locals.add(sym.getName());
+        }
+
+        if(assignStmt.getParent().hasAttribute("isStatic")){
+            for(Symbol sym : symTable.getFields()){
+                if(sym.getName().equals(leftOperand.get("name")) && !locals.contains(leftOperand.get("name"))){
+
+                    var message = String.format("Tring to access field '%s' on a static method", leftOperand.get("name"));
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(assignStmt),
+                            NodeUtils.getColumn(assignStmt),
+                            message,
+                            null));
+                    return null;
+                }
+            }
+        }
+
+
         String rightType = "";
 
         switch (rightOperand.getKind()){
@@ -287,6 +311,12 @@ public class CheckEqualType extends AnalysisVisitor{
                             null));
                     return null;
                 }
+                break;
+            }
+            case "NewArray":{
+                // vai ser preciso mudar caso arrays nao sejam so de ints
+                rightType = "int_array";
+                break;
             }
         }
 
