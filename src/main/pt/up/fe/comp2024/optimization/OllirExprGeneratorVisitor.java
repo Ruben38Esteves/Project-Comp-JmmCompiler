@@ -21,6 +21,7 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
     private static final String SPACE = " ";
     private static final String ASSIGN = ":=";
     private final String END_STMT = ";\n";
+    private final String NL = "\n";
 
     private final SymbolTable table;
 
@@ -31,12 +32,14 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
     @Override
     protected void buildVisitor() {
         addVisit(VAR_REF_EXPR, this::visitVarRef);
+        addVisit(UNARY_EXPR, this::visitUnaryExpr);
         addVisit(BINARY_EXPR, this::visitBinExpr);
         addVisit(BOOLEAN_EXPR, this::visitBoolExpr);
         addVisit(INTEGER_LITERAL, this::visitInteger);
         addVisit(BOOLEAN_LITERAL, this::visitBoolean);
         addVisit(METHOD_EXPR, this::visitMethodExpr);
         addVisit(CLASS_INSTANCE, this::visitClassInstance);
+        addVisit(ARRAY_ACCESS_EXPR, this::visitArrayAccess);
         // array init
         setDefaultVisit(this::defaultVisit);
     }
@@ -54,7 +57,12 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
     private OllirExprResult visitBoolean(JmmNode node, Void unused) {
         var boolType = new Type("bool", false);
         String ollirBoolType = OptUtils.toOllirType(boolType);
-        String code = node.get("value") + ollirBoolType;
+        String code;
+        if(node.get("value").equals("true")){
+            code = "1" + ollirBoolType;
+        }else{
+            code = "0" + ollirBoolType;
+        }
         return new OllirExprResult(code);
     }
 
@@ -91,25 +99,48 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         var rhs = visit(node.getJmmChild(1));
 
         StringBuilder computation = new StringBuilder();
-
+        StringBuilder code = new StringBuilder();
         // code to compute the children
         computation.append(lhs.getComputation());
         computation.append(rhs.getComputation());
 
-        // code to compute self
-        Type resType = TypeUtils.getExprType(node, table);
-        String resOllirType = OptUtils.toOllirType(resType);
-        String code = OptUtils.getTemp() + resOllirType;
+        if(node.get("op").equals("<") || node.get("op").equals(">")){
 
-        computation.append(code).append(SPACE)
-                .append(ASSIGN).append(resOllirType).append(SPACE)
-                .append(lhs.getCode()).append(SPACE);
 
-        Type type = TypeUtils.getExprType(node, table);
-        computation.append(node.get("op")).append(OptUtils.toOllirType(type)).append(SPACE)
-                .append(rhs.getCode()).append(END_STMT);
+            // code to compute self
+            Type resType = TypeUtils.getExprType(node, table);
+            String resOllirType = OptUtils.toOllirType(resType);
+            code.append(OptUtils.getTemp()).append(resOllirType);
 
-        return new OllirExprResult(code, computation);
+            computation.append(code).append(SPACE)
+                    .append(ASSIGN).append(resOllirType).append(SPACE)
+                    .append(lhs.getCode()).append(SPACE);
+
+            Type type = TypeUtils.getExprType(node, table);
+            computation.append(node.get("op")).append(OptUtils.toOllirType(type)).append(SPACE)
+                    .append(rhs.getCode()).append(END_STMT);
+
+        } else if (node.get("op").equals("&&")) {
+            String result_variable = OptUtils.getTemp();
+            computation.append("if(").append(lhs.getCode()).append(") goto ").append("true_1;").append(NL);
+            computation.append(result_variable).append(".bool ").append(":=.bool ").append(lhs.getCode()).append(";").append(NL);
+            computation.append("goto end;").append(NL);
+            computation.append("true_1:").append(NL);
+            computation.append(result_variable).append(".bool ").append(":=.bool ").append(rhs.getCode()).append(";").append(NL);
+            computation.append("end:").append(NL);
+            code.append(result_variable).append(".bool");
+        } else if (node.get("op").equals("||")) {
+            String result_variable = OptUtils.getTemp();
+            computation.append("if(").append(lhs.getCode()).append(") goto ").append("true_1;").append(NL);
+            computation.append(result_variable).append(".bool ").append(":=.bool ").append(rhs.getCode()).append(";").append(NL);
+            computation.append("goto end;").append(NL);
+            computation.append("true_1:").append(NL);
+            computation.append(result_variable).append(".bool ").append(":=.bool ").append(lhs.getCode()).append(";").append(NL);
+            computation.append("end:").append(NL);
+            code.append(result_variable).append(".bool");
+        }
+
+        return new OllirExprResult(code.toString(), computation.toString());
     }
 
 
@@ -211,6 +242,35 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         return new OllirExprResult(code.toString(), computation.toString());
     }
 
+    private OllirExprResult visitArrayAccess(JmmNode node, Void unused){
+        var code = new StringBuilder();
+        var computation = new StringBuilder();
+        JmmNode varRef = node.getChild(0);
+        var id = varRef.get("name");
+        String ollirType = "";
+        Type type = TypeUtils.getExprType(varRef, table);
+        if(type == null){
+            if(table.getImports().contains(id)){
+                ollirType = id;
+            }
+
+        }else{
+            ollirType = OptUtils.toOllirType(type);
+        }
+        JmmNode access = node.getChild(1);
+        OllirExprResult exprResult = visit(access);
+        computation.append(exprResult.getComputation());
+        code.append(id).append("[").append(exprResult.getCode()).append("]").append(ollirType);
+        return new OllirExprResult(code.toString(), computation.toString());
+    }
+
+    private OllirExprResult visitUnaryExpr(JmmNode node, Void unused){
+        var code = new StringBuilder();
+        var computation = new StringBuilder();
+        code.append("!.bool ");
+        code.append(visit(node.getChild(0)).getCode());
+        return new OllirExprResult(code.toString(), computation.toString());
+    }
 
 
     /**
