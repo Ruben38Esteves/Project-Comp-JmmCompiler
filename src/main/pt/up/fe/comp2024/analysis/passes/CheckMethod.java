@@ -128,15 +128,56 @@ public class CheckMethod extends AnalysisVisitor {
 
     private Void visitMethodDecl(JmmNode method, SymbolTable symTable){
         currentMethod = method.get("name");
+        List<JmmNode> params = method.getChildren(Kind.PARAM);
+        for (int i = 0; i < params.size()-1; i++) {
+            if(params.get(i).getChild(0).get("name").equals("int...")){
+                var message = String.format("Vararg in wrong place");
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(method),
+                        NodeUtils.getColumn(method),
+                        message,
+                        null));
+                return null;
+            }
+        }
         return null;
     }
 
     private Void visitMethodExpr(JmmNode methodExpr, SymbolTable symTable){
         String callerType = getVarRefType(methodExpr.getChild(0),symTable);
+        if(callerType == null){
+            var message = String.format("%s was not imported", methodExpr.getChild(0).get("name"));
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(methodExpr),
+                    NodeUtils.getColumn(methodExpr),
+                    message,
+                    null));
+            return null;
+        }
+        if(callerType.equals(symTable.getClassName())){
+            callerType = "this";
+        }
         if(callerType.equals("this")){
             if(symTable.getMethods().contains(methodExpr.getChild(1).get("name"))){
-                //cacaca
+                return null;
+            }else{
+                if(symTable.getImports().contains(symTable.getSuper())){
+                    return null;
+                }
+                var message = String.format("Trying to call undeclared method: %s", methodExpr.getChild(0).get("name"));
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(methodExpr),
+                        NodeUtils.getColumn(methodExpr),
+                        message,
+                        null));
+                return null;
             }
+        }
+        if(symTable.getImports().contains(callerType)){
+            return null;
         }
         return null;
         /*
@@ -320,7 +361,6 @@ public class CheckMethod extends AnalysisVisitor {
     }
 
     private Void visitReturnStmt(JmmNode returnStmt, SymbolTable symTable){
-        System.out.println("AA");
         String returnType = "";
 
         // fetch expeccted return type

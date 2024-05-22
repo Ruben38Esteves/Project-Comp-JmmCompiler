@@ -96,6 +96,94 @@ public class CheckEqualType extends AnalysisVisitor{
 
     }
 
+    private String getBinaryExprType(JmmNode binaryExpr, SymbolTable symTable){
+        JmmNode leftOperand = binaryExpr.getChild(0);
+        JmmNode rightOperand = binaryExpr.getChild(1);
+        String leftType = "";
+        String rightType = "";
+
+        switch (leftOperand.getKind()){
+            case "IntegerLiteral":{
+                leftType = "int";
+                break;
+            }
+            case "BooleanLiteral":{
+                leftType = "boolean";
+                break;
+            }
+            case "VarRefExpr":{
+                leftType = getVarRefType(leftOperand, symTable);
+                break;
+            }
+            case "MethodExpr":{
+                leftType = getMethodCallType(leftOperand, symTable);
+                break;
+            }
+        }
+
+        switch (rightOperand.getKind()){
+            case "IntegerLiteral":{
+                rightType = "int";
+                break;
+            }
+            case "BooleanLiteral":{
+                rightType = "boolean";
+                break;
+            }
+            case "VarRefExpr":{
+                rightType = getVarRefType(rightOperand,symTable);
+                break;
+            }
+            case "MethodExpr":{
+                rightType = getMethodCallType(rightOperand, symTable);
+                break;
+            }
+        }
+
+        if(leftType.equals("assume_correct")){
+            if(rightType.equals("assume_correct")){
+                return null;
+            }else{
+                leftType = rightType;
+            }
+        }else{
+            if(rightType.equals("assume_correct")){
+                rightType = leftType;
+            }
+        }
+
+        String op =binaryExpr.get("op");
+        if(op.equals("*") || op.equals("/") || op.equals("+") || op.equals("-")){
+            if(leftType.equals("int") && rightType.equals("int")){
+                return "int";
+            }else{
+                var message = String.format("Cannot perform '%s' on '%s'", op, rightType);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(binaryExpr),
+                        NodeUtils.getColumn(binaryExpr),
+                        message,
+                        null)
+                );
+            }
+        }
+        if(op.equals("||") || op.equals("&&") || op.equals("<") || op.equals(">")){
+            if(leftType.equals("boolean") && rightType.equals("boolean")){
+                return "boolean";
+            }else{
+                var message = String.format("Cannot perform '%s' on '%s'", op, rightType);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(binaryExpr),
+                        NodeUtils.getColumn(binaryExpr),
+                        message,
+                        null)
+                );
+            }
+        }
+        return null;
+    }
+
     private Void visitMethodDecl(JmmNode method, SymbolTable symTable){
         currentMethod = method.get("name");
         return null;
@@ -187,6 +275,19 @@ public class CheckEqualType extends AnalysisVisitor{
                 rightType = "int_array";
                 break;
             }
+            case "BinaryExpr":{
+                rightType = getBinaryExprType(rightOperand, symTable);
+                if(rightType == null){
+                    var message = String.format("Binary Expression is not correct");
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(rightOperand),
+                            NodeUtils.getColumn(rightOperand),
+                            message,
+                            null));
+                    return null;
+                }
+            }
         }
 
         if(symTable.getImports().contains(rightType)){
@@ -201,7 +302,7 @@ public class CheckEqualType extends AnalysisVisitor{
         if(leftType.equals(rightType)){
             return null;
         }else{
-            if(leftType.equals(symTable.getClassName()) && rightType.equals(symTable.getSuper()) && symTable.getImports().contains(symTable.getSuper())){
+            if(rightType.equals(symTable.getClassName()) && leftType.equals(symTable.getSuper()) && symTable.getImports().contains(symTable.getSuper())){
                 return null;
             }
 
