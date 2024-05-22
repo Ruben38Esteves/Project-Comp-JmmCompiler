@@ -29,6 +29,14 @@ public class CheckOpType extends AnalysisVisitor {
     }
 
     private String getMethodCallType(JmmNode methodCall, SymbolTable table){
+        String callerType = getVarRefType(methodCall.getChild(0), table);
+        if(table.getImports().contains(callerType)){
+            return "assume_correct";
+        }
+        String methodName = methodCall.getChild(1).get("name");
+        if(callerType.equals(table.getClassName())){
+            return table.getReturnType(methodName).getName();
+        }
         return null;
     }
 
@@ -42,7 +50,7 @@ public class CheckOpType extends AnalysisVisitor {
         for(Symbol sym: table.getLocalVariables(currentMethod)){
             if(sym.getName().equals(varName)){
                 if(sym.getType().isArray()){
-                    return sym.getType().getName() + " array";
+                    return sym.getType().getName() + "_array";
                 }
                 return sym.getType().getName();
             }
@@ -51,7 +59,7 @@ public class CheckOpType extends AnalysisVisitor {
         for(Symbol sym: table.getParameters(currentMethod)){
             if(sym.getName().equals(varName)){
                 if(sym.getType().isArray()){
-                    return sym.getType().getName() + " array";
+                    return sym.getType().getName() + "_array";
                 }
                 return sym.getType().getName();
             }
@@ -88,7 +96,11 @@ public class CheckOpType extends AnalysisVisitor {
                 break;
             }
             case "VarRefExpr":{
-                leftType = getVarRefType(leftOperand,symTable);
+                leftType = getVarRefType(leftOperand, symTable);
+                break;
+            }
+            case "MethodExpr":{
+                leftType = getMethodCallType(leftOperand, symTable);
                 break;
             }
         }
@@ -106,7 +118,24 @@ public class CheckOpType extends AnalysisVisitor {
                 rightType = getVarRefType(rightOperand,symTable);
                 break;
             }
+            case "MethodExpr":{
+                rightType = getMethodCallType(rightOperand, symTable);
+                break;
+            }
         }
+
+        if(leftType.equals("assume_correct")){
+            if(rightType.equals("assume_correct")){
+                return null;
+            }else{
+                leftType = rightType;
+            }
+        }else{
+            if(rightType.equals("assume_correct")){
+                rightType = leftType;
+            }
+        }
+
         String op =binaryExpr.get("op");
         if(op.equals("*") || op.equals("/") || op.equals("+") || op.equals("-")){
             if(leftType.equals("int") && rightType.equals("int")){
