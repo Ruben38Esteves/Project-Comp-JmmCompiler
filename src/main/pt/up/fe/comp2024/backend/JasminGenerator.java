@@ -157,8 +157,8 @@ public class JasminGenerator {
         code.append(")").append(getTypeJasmin(method.getReturnType())).append(NL);
 
         // Add limits
-        code.append(TAB).append(".limit stack 99").append(NL);
-        code.append(TAB).append(".limit locals 99").append(NL);
+        code.append(TAB).append(".limit stack 98").append(NL);
+        code.append(TAB).append(".limit locals 98").append(NL);
 
         for (var inst : method.getInstructions()) {
             for (var label: method.getLabels(inst)){

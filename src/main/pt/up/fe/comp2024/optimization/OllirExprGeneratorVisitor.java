@@ -41,6 +41,7 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         addVisit(CLASS_INSTANCE, this::visitClassInstance);
         addVisit(ARRAY_ACCESS_EXPR, this::visitArrayAccess);
         addVisit(NEW_ARRAY, this::visitNewArray);
+        addVisit(ARRAY_INITIALIZATION, this::visitArrayInitialization);
         // array init
         setDefaultVisit(this::defaultVisit);
     }
@@ -283,7 +284,7 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         JmmNode access = node.getChild(1);
         OllirExprResult exprResult = visit(access);
         computation.append(exprResult.getComputation());
-        code.append(id).append("[").append(exprResult.getCode()).append("]").append(ollirType);
+        code.append(id).append(ollirType).append("[").append(exprResult.getCode()).append("]").append(".i32");
         return new OllirExprResult(code.toString(), computation.toString());
     }
 
@@ -301,6 +302,24 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         OllirExprResult exprResult = visit(node.getChild(1).getChild(0));
         computation.append(exprResult.getComputation());
         code.append("new(array, ").append(exprResult.getCode()).append(").array.i32");
+        return new OllirExprResult(code.toString(), computation.toString());
+    }
+
+    private OllirExprResult visitArrayInitialization(JmmNode node, Void unused){
+        var code = new StringBuilder();
+        var computation = new StringBuilder();
+        String temp_var = OptUtils.getTemp();
+        String array_type = ".array.i32";
+        computation.append(temp_var).append(array_type).append(" :=").append(array_type).append(" new(array,").append(node.getChildren().size()).append(".i32").append(")").append(array_type).append(";").append(NL);
+
+        int i = 0;
+        for(JmmNode childNode : node.getChildren()){
+            OllirExprResult visited_child = visit(childNode);
+            computation.append(visited_child.getComputation());
+            computation.append(temp_var).append(array_type).append("[").append(i).append(".i32]").append(".i32 :=.i32 ").append(visited_child.getCode()).append(";").append(NL);
+            i++;
+        }
+        code.append(temp_var).append(array_type);
         return new OllirExprResult(code.toString(), computation.toString());
     }
 
