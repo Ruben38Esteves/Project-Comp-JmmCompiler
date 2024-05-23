@@ -42,6 +42,7 @@ public class TypeUtils {
             case BOOLEAN_LITERAL -> new Type(BOOLEAN_TYPE_NAME, false);
             case VAR_DECL, CLASS_INSTANCE, NEW_ARRAY -> new Type(expr.get("name"), false);
             case CALL_METHOD -> table.getReturnType(expr.get("methodCall"));
+            case METHOD_EXPR -> getExprType(expr.getChild(0),table);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
         };
 

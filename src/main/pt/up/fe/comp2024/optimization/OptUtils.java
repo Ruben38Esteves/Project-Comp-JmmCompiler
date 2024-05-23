@@ -40,6 +40,9 @@ public class OptUtils {
     }
 
     public static String toOllirType(Type type) {
+        if(type.isArray()){
+            return ".array" + toOllirType(type.getName());
+        }
         return toOllirType(type.getName());
     }
 
@@ -50,6 +53,7 @@ public class OptUtils {
             case "String" -> "String";
             case "void" -> "V";
             case "String[]" -> "array.String";
+            case "int[]" -> "array.i32";
             default -> typeName;
         };
 
