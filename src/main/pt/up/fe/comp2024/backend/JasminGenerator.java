@@ -51,6 +51,10 @@ public class JasminGenerator {
         generators.put(CallInstruction.class, this::generateCallInstr);
         generators.put(PutFieldInstruction.class, this::generatePutInstr);
         generators.put(GetFieldInstruction.class, this::generateGetInstr);
+        generators.put(OpCondInstruction.class, this::generateOpCondInstruction);
+        generators.put(GotoInstruction.class, this::generateGoToInstruction);
+        generators.put(SingleOpCondInstruction.class, this::generateSingleOpInstruction);
+        generators.put(UnaryOpInstruction.class, this::generateUnaryOpInstruction);
     }
 
     public List<Report> getReports() {
@@ -157,6 +161,10 @@ public class JasminGenerator {
         code.append(TAB).append(".limit locals 99").append(NL);
 
         for (var inst : method.getInstructions()) {
+            for (var label: method.getLabels(inst)){
+                code.append(label).append(":").append(NL);
+            }
+
             var instCode = StringLines.getLines(generators.apply(inst)).stream()
                     .collect(Collectors.joining(NL + TAB, TAB, NL));
 
@@ -241,14 +249,18 @@ public class JasminGenerator {
 
         // apply operation
         var op = switch (binaryOp.getOperation().getOpType()) {
-            case ADD -> "iadd";
-            case MUL -> "imul";
-            case SUB -> "isub";
-            case DIV -> "idiv";
+            case ADD -> "iadd\n";
+            case MUL -> "imul\n";
+            case SUB -> "isub\n";
+            case DIV -> "idiv\n";
+            case LTH -> "if_icmplt ";
+            case LTE -> "if_icmple ";
+            case GTE -> "if_icmpge ";
+            case GTH -> "if_icmpgt ";
             default -> throw new NotImplementedException(binaryOp.getOperation().getOpType());
         };
 
-        code.append(op).append(NL);
+        code.append(op);
 
         return code.toString();
     }
@@ -352,6 +364,38 @@ public class JasminGenerator {
         String fieldName = field.getName();
         Type fieldType = field.getType();
         code.append("getfield ").append(className).append("/").append(fieldName).append(" ").append(getTypeJasmin(fieldType)).append(NL);
+        return code.toString();
+    }
+
+
+    private String generateOpCondInstruction(OpCondInstruction instr) {
+        var code = new StringBuilder();
+
+        code.append(generators.apply(instr.getCondition()));
+        var label = instr.getLabel();
+        if (label != null){
+            code.append(label).append(NL);
+        }
+       return code.toString();
+    }
+
+    private String generateGoToInstruction(GotoInstruction instr) {
+        var code = new StringBuilder();
+        code.append("goto ").append(instr.getLabel()).append(NL);
+        return code.toString();
+    }
+
+    private String generateSingleOpInstruction(SingleOpCondInstruction instr) {
+        var code = new StringBuilder();
+        code.append(generators.apply(instr.getCondition())).append("ifne ").append(instr.getLabel()).append(NL);
+
+        return code.toString();
+    }
+
+    private String generateUnaryOpInstruction(UnaryOpInstruction instr) {
+        var code = new StringBuilder();
+        code.append(generators.apply(instr.getOperand()));
+        code.append("ineg").append(NL);
         return code.toString();
     }
 
