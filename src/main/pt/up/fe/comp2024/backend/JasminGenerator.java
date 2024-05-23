@@ -187,10 +187,27 @@ public class JasminGenerator {
 
         // store value in the stack in destination
         var lhs = assign.getDest();
+        var rhs = assign.getRhs();
+
+        if (lhs instanceof ArrayOperand arrayOperand){
+            var reg = currentMethod.getVarTable().get(arrayOperand.getName()).getVirtualReg();
+            if (reg >= 4){
+                code.append("aload ");
+            }
+            else{
+                code.append("aload_");
+            }
+            code.append(reg).append(NL);
+            code.append(generators.apply(((ArrayOperand) lhs).getIndexOperands().get(0)));
+            code.append(generators.apply(assign.getRhs())).append("iastore").append(NL);
+            return code.toString();
+        }
 
         if (!(lhs instanceof Operand)) {
             throw new NotImplementedException(lhs.getClass());
         }
+
+
 
         var operand = (Operand) lhs;
 
@@ -227,8 +244,25 @@ public class JasminGenerator {
     }
 
     private String generateOperand(Operand operand) {
+
+        StringBuilder code = new StringBuilder();
         // get register
         var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
+
+        if (operand instanceof ArrayOperand arrayOperand) {
+            if (reg >= 4){
+                code.append("aload ");
+            }
+            else{
+                code.append("aload_");
+            }
+            code.append(reg).append(NL);
+            code.append(generators.apply(arrayOperand.getIndexOperands().get(0)));
+            code.append("iaload").append(NL);
+            return code.toString();
+        }
+
+
         switch (operand.getType().getTypeOfElement()) {
             case INT32, BOOLEAN -> {
                 return "iload " + reg + NL;
@@ -284,6 +318,11 @@ public class JasminGenerator {
     private String generateCallInstr(CallInstruction call){
         var code = new StringBuilder();
         var temp_code = new StringBuilder();
+        if(call.getInvocationType().toString().equals("NEW") && call.getCaller().toString().contains("array")){
+            code.append(generators.apply(call.getArguments().get(0)))
+                    .append("newarray int").append(NL);
+            return code.toString();
+        }
         var className = call.getOperands().get(0).getType().toString().split("\\(")[1].split("\\)")[0];;
         var reg = 0;
         if(className.equals("this")){
