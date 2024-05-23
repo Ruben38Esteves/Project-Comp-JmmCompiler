@@ -395,7 +395,13 @@ public class JasminGenerator {
     private String generateUnaryOpInstruction(UnaryOpInstruction instr) {
         var code = new StringBuilder();
         code.append(generators.apply(instr.getOperand()));
-        code.append("ineg").append(NL);
+        switch (instr.getOperation().getOpType()) {
+            case NEQ -> code.append("ineg");
+            case NOT -> code.append("iconst_1").append(NL).append("ixor");
+            case NOTB -> code.append("iconst_1").append(NL).append("ixor");
+            default -> throw new NotImplementedException(instr.getOperation().getOpType());
+        }
+        code.append(NL);
         return code.toString();
     }
 
