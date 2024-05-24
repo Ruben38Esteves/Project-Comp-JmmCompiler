@@ -325,10 +325,10 @@ public class JasminGenerator {
     private String generateCallInstr(CallInstruction call) {
         var code = new StringBuilder();
         var temp_code = new StringBuilder();
-
         var className = call.getOperands().toString().split(" ")[1].split("\\.")[0];
 
         var invType = call.getInvocationType().toString();
+
         if (invType != "invokestatic" && invType != "NEW" && invType != "arraylength") {
             //aload_reg
             code.append("aload_").append(currentMethod.getVarTable().get(className).getVirtualReg()).append(NL);
@@ -337,20 +337,22 @@ public class JasminGenerator {
             className = ollirResult.getOllirClass().getClassName();
         }
 
-        if (invType == "NEW") {
-            if (call.getCaller().toString().contains("array")) {
-                code.append(generators.apply(call.getArguments().get(0))).append("newarray int").append(NL);
+
+        switch (invType){
+            case "NEW":
+                if (call.getCaller().toString().contains("array")) {
+                    code.append(generators.apply(call.getArguments().get(0))).append("newarray int").append(NL);
+                    return code.toString();
+                }
+                code.append("new ")
+                        .append(call.getOperands().get(0).getType().toString().split("\\(")[1].split("\\)")[0]).append(NL); //classname
                 return code.toString();
-            }
-            code.append("new ")
-            .append(call.getOperands().get(0).getType().toString().split("\\(")[1].split("\\)")[0]).append(NL); //classname
-            return code.toString();
+
+            case "arraylength":
+                code.append(generators.apply(call.getCaller())).append("arraylength").append(NL);
+                return code.toString();
         }
 
-        if (invType == "arraylength") {
-            code.append(generators.apply(call.getCaller())).append("arraylength").append(NL);
-            return code.toString();
-        }
 
         var className_ = call.getOperands().get(0).getType().toString().split("\\(")[1].split("\\)")[0];
         if (invType == "invokespecial") {
@@ -371,8 +373,8 @@ public class JasminGenerator {
             var args = call.getArguments();
             temp_code.append(methodName).append("(");
             for (var arg : args) {
-                temp_code.append(getTypeJasmin(arg.getType()));
                 code.append(generators.apply(arg));
+                temp_code.append(getTypeJasmin(arg.getType()));
             }
             temp_code.append(")").append(getTypeJasmin(call.getReturnType())).append(NL);
         }
