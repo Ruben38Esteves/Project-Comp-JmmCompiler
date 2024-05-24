@@ -291,6 +291,14 @@ public class JasminGenerator {
             case LTE -> "if_icmple ";
             case GTE -> "if_icmpge ";
             case GTH -> "if_icmpgt ";
+            case XOR -> "ixor\n";
+            case AND -> "iand\n";
+            case OR -> "ior\n";
+            case EQ -> "if_icmpeq ";
+            case NEQ -> "if_icmpne ";
+            case NOT -> "iconst_1\nixor\n";
+            case NOTB -> "iconst_1\nixor\n";
+            
             default -> throw new NotImplementedException(binaryOp.getOperation().getOpType());
         };
 
