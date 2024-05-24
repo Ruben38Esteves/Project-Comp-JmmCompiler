@@ -323,71 +323,63 @@ public class JasminGenerator {
         return code.toString();
     }
 
-    private String generateCallInstr(CallInstruction call){
+    private String generateCallInstr(CallInstruction call) {
         var code = new StringBuilder();
         var temp_code = new StringBuilder();
-        if(call.getInvocationType().toString().equals("NEW") && call.getCaller().toString().contains("array")){
-            code.append(generators.apply(call.getArguments().get(0)))
-                    .append("newarray int").append(NL);
-            return code.toString();
+
+        var className = call.getOperands().toString().split(" ")[1].split("\\.")[0];
+
+        var invType = call.getInvocationType().toString();
+        if (invType != "invokestatic" && invType != "NEW" && invType != "arraylength") {
+            //aload_reg
+            code.append("aload_").append(currentMethod.getVarTable().get(className).getVirtualReg()).append(NL);
         }
-        var className = call.getOperands().get(0).getType().toString().split("\\(")[1].split("\\)")[0];;
-        var reg = 0;
         if(className.equals("this")){
             className = ollirResult.getOllirClass().getClassName();
         }
-        switch (call.getInvocationType()){
-            case invokestatic -> {
-                var varName = call.getOperands().toString().split(" ")[1].split("\\.")[0];
-                code.append("invokestatic ").append(varName).append("/");
-                var methodName = call.getMethodName().toString().split("\"")[1];
-                var args = call.getArguments();
-                code.append(methodName).append("(");
-                for(var arg : args){
-                    temp_code.append(generators.apply(arg));
-                    code.append(getTypeJasmin(arg.getType()));
-                }
-                code.append(")").append(getTypeJasmin(call.getReturnType())).append(NL);
-            }
-            case invokespecial -> {
-                if(className.equals("This")){
-                    reg = currentMethod.getVarTable().get(className).getVirtualReg();
-                    className = ollirResult.getOllirClass().getClassName();
-                }else{
-                    var varName = call.getOperands().toString().split(" ")[1].split("\\.")[0];
-                    reg = currentMethod.getVarTable().get(varName).getVirtualReg();
-                }
-                code.append("aload ").append(reg).append(NL);
-                className = className.substring(0,1).toUpperCase() + className.substring(1);
-                code.append("invokespecial ").append(className).append("/").append("<init>()V").append(NL).append("pop").append(NL);
 
+        if (invType == "NEW") {
+            if (call.getCaller().toString().contains("array")) {
+                code.append(generators.apply(call.getArguments().get(0))).append("newarray int").append(NL);
+                return code.toString();
             }
-            case invokevirtual -> {
-                if(className.equals("This")){
-                    reg = currentMethod.getVarTable().get(className).getVirtualReg();
-                    className = ollirResult.getOllirClass().getClassName();
-                }else{
-                    var varName = call.getOperands().toString().split(" ")[1].split("\\.")[0];
-                    reg = currentMethod.getVarTable().get(varName).getVirtualReg();
-                }
-                temp_code.append("aload ").append(reg).append(NL);
-                code.append("invokevirtual ").append(className).append("/");
-                var methodName = call.getMethodName().toString().split("\"")[1];
-                var args = call.getArguments();
-                code.append(methodName).append("(");
-                for(var arg : args){
-                    temp_code.append(generators.apply(arg));
-                    code.append(getTypeJasmin(arg.getType()));
-                }
-                code.append(")").append(getTypeJasmin(call.getReturnType())).append(NL);
-            }
-            case NEW -> {
-                code.append("new ").append(className).append(NL);
-                code.append("dup").append(NL);
-            }
+            code.append("new ")
+            .append(call.getOperands().get(0).getType().toString().split("\\(")[1].split("\\)")[0]).append(NL); //classname
+            return code.toString();
         }
-        temp_code.append(code);
-        return temp_code.toString();
+
+        if (invType == "arraylength") {
+            code.append(generators.apply(call.getCaller())).append("arraylength").append(NL);
+            return code.toString();
+        }
+
+        var className_ = call.getOperands().get(0).getType().toString().split("\\(")[1].split("\\)")[0];
+        if (invType == "invokespecial") {
+            code.append("invokespecial ").append(className_).append("/").append("<init>()V").append(NL);
+        } else if (invType == "invokevirtual") {
+            temp_code.append("invokevirtual ").append(className_).append("/");
+            var methodName = call.getMethodName().toString().split("\"")[1];
+            var args = call.getArguments();
+            temp_code.append(methodName).append("(");
+            for(var arg : args){
+                code.append(generators.apply(arg));
+                temp_code.append(getTypeJasmin(arg.getType()));
+            }
+            temp_code.append(")").append(getTypeJasmin(call.getReturnType())).append(NL);
+        } else {
+            temp_code.append("invokestatic ").append(className).append("/");
+            var methodName = call.getMethodName().toString().split("\"")[1];
+            var args = call.getArguments();
+            temp_code.append(methodName).append("(");
+            for (var arg : args) {
+                temp_code.append(getTypeJasmin(arg.getType()));
+                code.append(generators.apply(arg));
+            }
+            temp_code.append(")").append(getTypeJasmin(call.getReturnType())).append(NL);
+        }
+
+        code.append(temp_code);
+        return code.toString();
     }
 
     private String generatePutInstr(PutFieldInstruction intr){
